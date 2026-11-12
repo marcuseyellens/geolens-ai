@@ -1,0 +1,36 @@
+/* Recharts 把颜色写进 SVG presentation attribute，var() 在其中不会解析，
+   图形会变成透明。这里用 CSS 规则覆盖，让图表跟随浅色/深色令牌。
+   刻意不放进 @layer：类名由 Recharts 运行时生成，Tailwind 的
+   tree-shaking 扫不到，放进 @layer 会被 purge 掉。 */
+.recharts-bar-rectangle path,
+.recharts-rectangle.recharts-radar-polygon {
+  fill: var(--ds-accent);
+}
+
+.recharts-radar-polygon {
+  fill: var(--ds-accent);
+  stroke: var(--ds-accent);
+}
+
+.recharts-cartesian-grid line,
+.recharts-polar-grid-concentric-polygon,
+.recharts-polar-grid-angle line {
+  stroke: var(--ds-edge);
+}
+
+.recharts-cartesian-axis-tick-value,
+.recharts-polar-angle-axis-tick-value {
+  fill: var(--ds-ink-muted);
+}
+
+.recharts-polar-radius-axis-tick-value {
+  fill: var(--ds-ink-subtle);
+}
+
+.recharts-legend-item-text {
+  color: var(--ds-ink-muted);
+}
+
+.recharts-default-tooltip {
+  color: var(--ds-ink) !important;
+}
