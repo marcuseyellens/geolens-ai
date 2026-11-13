@@ -49,6 +49,12 @@ func (s *Server) RegisterRoutes(r *gin.Engine) {
 		// 诊断报告
 		api.GET("/brands/:id/diagnose", s.getDiagnosticReport)
 
+		// 品牌可见性（F-305）
+		api.GET("/brands/:id/visibility", s.getVisibility)
+
+		// 免注册站点检查（F-401~F-404）
+		api.POST("/site-audits", s.auditSite)
+
 		// 模型配置
 		api.GET("/models", s.listModels)
 		api.GET("/health", s.health)

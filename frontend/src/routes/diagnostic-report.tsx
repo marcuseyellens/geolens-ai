@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { 
-  Card, Badge, Spinner, Callout, Table 
+  Card, Badge, Spinner, Callout, Table, Button 
 } from "../ds";
 import { 
-  FileText, ExternalLink, AlertTriangle, CheckCircle, XCircle, 
-  Loader, Globe, BarChart3, Users, Link, Copy, Download
+  AlertTriangle, Globe, Users, Link as LinkIcon, Copy, Download,
+  Eye, X, ExternalLink, ChevronRight, Search
 } from "lucide-react";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -13,8 +13,7 @@ import {
 } from "recharts";
 import { api } from "../api";
 import type { 
-  DiagnosticReport, MetricSet, ModelMetricSet, SOVRow, CitationGroup, 
-  NameConfusion, FixItem, FixArtifact, SiteScore, GroupScore 
+  DiagnosticReport, FixItem, FixArtifact, GroupScore, RunAnswer
 } from "../types";
 
 export default function DiagnosticReportPage() {
@@ -22,6 +21,7 @@ export default function DiagnosticReportPage() {
   const [report, setReport] = useState<DiagnosticReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -81,6 +81,16 @@ export default function DiagnosticReportPage() {
         <Badge>{report.methodology_version}</Badge>
       </div>
 
+      {/* 执行摘要（F-501.1） */}
+      <Card raised>
+        <h2 className="text-lg font-semibold mb-4">执行摘要</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <SummaryBlock label="现状" text={report.executive_summary.current} tone="accent" />
+          <SummaryBlock label="差距" text={report.executive_summary.gap} tone="warn" />
+          <SummaryBlock label="下一步" text={report.executive_summary.next} tone="positive" />
+        </div>
+      </Card>
+
       {/* 方法论说明 */}
       <Card>
         <h2 className="text-lg font-semibold mb-3">方法论说明</h2>
@@ -95,6 +105,13 @@ export default function DiagnosticReportPage() {
       </Card>
 
       {/* 核心指标概览 */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">核心指标概览</h2>
+        <Button variant="secondary" size="sm" onClick={() => setEvidenceOpen(true)}>
+          <Eye className="h-4 w-4" />
+          看证据
+        </Button>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <div className="flex items-center justify-between">
@@ -248,7 +265,7 @@ export default function DiagnosticReportPage() {
       {/* 引用地图 */}
       <Card>
         <h2 className="text-lg font-semibold mb-4 flex items-center">
-          <Link className="w-5 h-5 mr-2" />
+          <LinkIcon className="w-5 h-5 mr-2" />
           引用地图
         </h2>
         
@@ -381,6 +398,128 @@ export default function DiagnosticReportPage() {
           ))}
         </div>
       </Card>
+
+      {/* 证据下钻抽屉（F-304 / DoD-4） */}
+      {evidenceOpen && (
+        <EvidenceDrawer
+          evidence={report.evidence}
+          brandName={report.brand_name}
+          onClose={() => setEvidenceOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+// 执行摘要三段展示
+function SummaryBlock({
+  label,
+  text,
+  tone,
+}: {
+  label: string;
+  text: string;
+  tone: "accent" | "warn" | "positive";
+}) {
+  return (
+    <div className="rounded-ds border border-edge p-4">
+      <Badge tone={tone}>{label}</Badge>
+      <p className="mt-2 text-sm text-ink">{text}</p>
+    </div>
+  );
+}
+
+// 证据下钻抽屉：两次点击可达原文（第一次打开抽屉，第二次打开 citation 链接）
+function EvidenceDrawer({
+  evidence,
+  brandName,
+  onClose,
+}: {
+  evidence: RunAnswer[];
+  brandName: string;
+  onClose: () => void;
+}) {
+  const [query, setQuery] = useState("");
+  const filtered = evidence.filter((e) => {
+    if (!query.trim()) return true;
+    const q = query.toLowerCase();
+    return (
+      e.question_text.toLowerCase().includes(q) ||
+      e.platform.toLowerCase().includes(q) ||
+      e.intent.toLowerCase().includes(q)
+    );
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end">
+      <div className="absolute inset-0 bg-black/30" onClick={onClose} />
+      <div className="relative w-full max-w-2xl bg-surface h-full shadow-xl flex flex-col">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-edge">
+          <div>
+            <h2 className="font-semibold text-ink">证据下钻</h2>
+            <p className="text-xs text-ink-muted mt-0.5">
+              {brandName} · {evidence.length} 条检测证据
+            </p>
+          </div>
+          <button onClick={onClose} className="text-ink-muted hover:text-ink" aria-label="关闭">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="px-6 py-3 border-b border-edge">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-subtle" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="按问题、模型或意图筛选"
+              className="w-full pl-9 pr-3 py-2 text-sm rounded-ds bg-canvas border border-edge text-ink focus:outline-none focus:border-accent"
+            />
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+          {filtered.length === 0 && (
+            <p className="text-sm text-ink-muted text-center py-8">无匹配证据</p>
+          )}
+          {filtered.map((e) => (
+            <div key={e.run_id} className="rounded-ds border border-edge p-4">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Badge tone="accent">{e.platform}</Badge>
+                <Badge tone={e.mention.mentioned ? "positive" : "negative"}>
+                  {e.mention.mentioned ? "已提及" : "未提及"}
+                </Badge>
+                {e.mention.recommended && <Badge tone="positive">推荐</Badge>}
+                {e.mention.linked && <Badge tone="positive">已链接</Badge>}
+                <span className="text-xs text-ink-subtle">{e.intent}</span>
+              </div>
+              <p className="mt-2 text-sm font-medium text-ink">{e.question_text}</p>
+              <p className="mt-2 text-xs text-ink-muted leading-relaxed line-clamp-4">
+                {e.raw_answer_text}
+              </p>
+              {e.citations.length > 0 && (
+                <div className="mt-3 space-y-1">
+                  {e.citations.map((c, i) => (
+                    <a
+                      key={i}
+                      href={c.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-1.5 text-xs text-accent hover:underline"
+                    >
+                      <ExternalLink className="h-3 w-3 shrink-0" />
+                      <span className="truncate">{c.domain}{c.page_path}</span>
+                      {c.direct_citation && (
+                        <Badge tone="positive">品牌链接</Badge>
+                      )}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

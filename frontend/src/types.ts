@@ -196,6 +196,18 @@ export interface NameConfusion {
   excerpt: string;
 }
 
+export interface ExecutiveSummary {
+  current: string;
+  gap: string;
+  next: string;
+}
+
+export interface Visibility {
+  brand_id: string;
+  buyer: MetricSet;
+  models: Record<AIModelID, ModelMetricSet>;
+}
+
 export type CheckStatus = "pass" | "partial" | "fail";
 export type AuditGroup = "crawlability" | "structured_data" | "content_signals" | "basic_health";
 
@@ -257,6 +269,7 @@ export interface DiagnosticReport {
   brand_id: string;
   brand_name: string;
   generated_at: string;
+  executive_summary: ExecutiveSummary;
   site_readiness?: SiteScore;
   ai_visibility: MetricSet;
   buyer_questions: Record<QueryIntent, MetricSet>;

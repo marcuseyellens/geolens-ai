@@ -1,15 +1,17 @@
 import { Routes, Route, Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Target, FileBarChart, Settings, Moon, Sun } from "lucide-react";
+import { LayoutDashboard, Target, FileBarChart, Settings, Moon, Sun, Globe } from "lucide-react";
 import { cn, useTheme } from "./ds";
 import DashboardPage from "./routes/dashboard";
 import BrandsPage from "./routes/brands";
 import BrandDetailPage from "./routes/brand-detail";
 import SettingsPage from "./routes/settings";
 import DiagnosticReportPage from "./routes/diagnostic-report";
+import AuditPage from "./routes/audit";
 
 const navItems = [
   { path: "/", label: "概览", icon: LayoutDashboard },
   { path: "/brands", label: "品牌", icon: Target },
+  { path: "/audit", label: "站点检查", icon: Globe },
   { path: "/settings", label: "设置", icon: Settings },
 ];
 
@@ -70,6 +72,7 @@ export default function App() {
           <Route path="/brands" element={<BrandsPage />} />
           <Route path="/brands/:id" element={<BrandDetailPage />} />
           <Route path="/brands/:id/diagnostic" element={<DiagnosticReportPage />} />
+          <Route path="/audit" element={<AuditPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Routes>
       </main>

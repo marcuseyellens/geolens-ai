@@ -1,4 +1,13 @@
-import type { Brand, DetectionQuery, DetectionResult, ModelInfo, ReportSummary } from "./types";
+import type {
+  Brand,
+  DetectionQuery,
+  DetectionResult,
+  DiagnosticReport,
+  ModelInfo,
+  ReportSummary,
+  SiteScore,
+  Visibility,
+} from "./types";
 
 const BASE = "/api/v1";
 
@@ -47,7 +56,14 @@ export const api = {
   listResults: (brandId: string) => req<DetectionResult[]>(`/brands/${brandId}/results`),
   
   // ---- Diagnostics ----
-  getDiagnosticReport: (brandId: string) => req<any>(`/brands/${brandId}/diagnose`),
+  getDiagnosticReport: (brandId: string) =>
+    req<DiagnosticReport>(`/brands/${brandId}/diagnose`),
+  getVisibility: (brandId: string) =>
+    req<Visibility>(`/brands/${brandId}/visibility`),
+
+  // ---- Site audit (免注册) ----
+  auditSite: (url: string) =>
+    req<SiteScore>("/site-audits", { method: "POST", body: JSON.stringify({ url }) }),
 
   // ---- Models ----
   listModels: () => req<ModelInfo[]>("/models"),

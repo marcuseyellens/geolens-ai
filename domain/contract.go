@@ -168,6 +168,21 @@ type CitationSample struct {
 	IsDirect bool   `json:"is_direct"`
 }
 
+// ExecutiveSummary 是报告第一节的执行摘要（F-501.1），固定三段：现状、差距、下一步。
+type ExecutiveSummary struct {
+	Current string `json:"current"`
+	Gap     string `json:"gap"`
+	Next    string `json:"next"`
+}
+
+// Visibility 是品牌可见性接口（F-305）的返回：Buyer Question 汇总 + 逐模型指标。
+// 刻意不合并成单一 AI 分数（DoD 6）。
+type Visibility struct {
+	BrandID string                         `json:"brand_id"`
+	Buyer   MetricSet                      `json:"buyer"`
+	Models  map[AIModelID]ModelMetricSet   `json:"models"`
+}
+
 // Comparison 是 matched comparison：只比较两次都 valid 的问题子集（F-208 / §5.4）。
 type Comparison struct {
 	MatchedQuestions int     `json:"matched_questions"`
@@ -283,6 +298,7 @@ type DiagnosticReport struct {
 	BrandID            string                       `json:"brand_id"`
 	BrandName          string                       `json:"brand_name"`
 	GeneratedAt        time.Time                    `json:"generated_at"`
+	ExecutiveSummary   ExecutiveSummary             `json:"executive_summary"`
 	SiteReadiness      *SiteScore                   `json:"site_readiness"`
 	AIVisibility       MetricSet                    `json:"ai_visibility"`
 	BuyerQuestions     map[QueryIntent]MetricSet    `json:"buyer_questions"`

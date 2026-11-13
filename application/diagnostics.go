@@ -2,9 +2,11 @@ package application
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -193,6 +195,46 @@ func methodologyNotes() []string {
 	}
 }
 
+// buildExecutiveSummary 生成报告第一节（F-501.1）：现状、差距、下一步。
+// 只陈述可度量的事实，不用"技术就绪≠被推荐"之外的空话。
+func buildExecutiveSummary(v domain.MetricSet, audit *domain.SiteScore, fixes []domain.FixItem) domain.ExecutiveSummary {
+	current := "暂无有效 Buyer Question 检测记录，尚无可报告结论。"
+	if v.Usable > 0 {
+		current = "Buyer Question 提及率 " + pct(v.MentionRate) +
+			"，推荐率 " + pct(v.RecommendRate) + "（有效样本 " + itoa(v.Usable) + " 条）。"
+	}
+	if audit != nil && audit.Source != "unreachable" {
+		current += " 站点就绪度 " + score(audit.Score) + "/100。"
+	}
+
+	gap := "暂无数据，无法判断差距。"
+	switch {
+	case v.Usable > 0 && v.MentionRate < 0.5:
+		gap = "多数 Buyer Question 答案未出现本品牌，站点缺少可被 AI 直接引用的公开事实。"
+	case audit != nil && audit.Source != "unreachable" && audit.Score < 70:
+		gap = "站点就绪度 " + score(audit.Score) + "/100，低于 70 分基准，缺少关键 AI 可见性元素。"
+	case v.Usable > 0:
+		gap = "提及率已达标，差距集中在推荐与链接转化，以及站点结构化数据覆盖。"
+	case audit != nil && audit.TopFix != "":
+		gap = audit.TopFix
+	}
+
+	next := "先补充检测数据，再生成修复建议。"
+	if len(fixes) > 0 {
+		next = "优先执行 " + fixes[0].Priority + " 项：" + fixes[0].Change
+	} else if audit != nil && audit.TopFix != "" {
+		next = audit.TopFix
+	}
+
+	return domain.ExecutiveSummary{Current: current, Gap: gap, Next: next}
+}
+
+func pct(f float64) string { return fmt.Sprintf("%.1f%%", f*100) }
+
+func score(f float64) string { return fmt.Sprintf("%.1f", f) }
+
+func itoa(n int) string { return strconv.Itoa(n) }
+
 // BuildDiagnostics 组装报告固定 7 节（F-501）。所有指标都由 RunAnswer 经口径引擎派生，可重算。
 func (s *DetectionService) BuildDiagnostics(ctx context.Context, brandID string, audit *domain.SiteScore) (*domain.DiagnosticReport, error) {
 	brand, err := s.brands.GetByID(ctx, brandID)
@@ -229,5 +271,29 @@ func (s *DetectionService) BuildDiagnostics(ctx context.Context, brandID string,
 		MethodologyNotes:   methodologyNotes(),
 	}
 	report.FixList = siteaudit.FixList(audit, report.AIVisibility)
+	report.ExecutiveSummary = buildExecutiveSummary(report.AIVisibility, audit, report.FixList)
 	return report, nil
+}
+
+// GetVisibility 返回品牌可见性（F-305）：Buyer Question 汇总 + 逐模型指标，刻意不合并单一分数。
+func (s *DetectionService) GetVisibility(ctx context.Context, brandID string) (*domain.Visibility, error) {
+	brand, err := s.brands.GetByID(ctx, brandID)
+	if err != nil {
+		return nil, ErrNotFound
+	}
+	queries, err := s.queries.ListByBrand(ctx, brandID)
+	if err != nil {
+		return nil, err
+	}
+	results, err := s.results.ListByBrand(ctx, brandID)
+	if err != nil {
+		return nil, err
+	}
+	answers := AdaptLegacy(*brand, queries, results)
+	buyerFilter := metrics.Filter{BrandCheck: metrics.BoolPtr(false)}
+	return &domain.Visibility{
+		BrandID: brand.ID,
+		Buyer:   metrics.Buyer(answers),
+		Models:  metrics.ByModel(answers, buyerFilter),
+	}, nil
 }
