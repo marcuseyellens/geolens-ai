@@ -5,31 +5,41 @@
 @layer base {
   :root {
     /* Canvas & surfaces */
-    --ds-canvas: #f8f9fb;
+    --ds-canvas: #f7f8fc;
     --ds-surface: #ffffff;
     --ds-surface-raised: #ffffff;
-    --ds-surface-overlay: rgba(255, 255, 255, 0.9);
+    --ds-surface-overlay: rgba(255, 255, 255, 0.92);
 
-    /* Ink */
-    --ds-ink: #1a1d29;
-    --ds-ink-muted: #6b7280;
-    --ds-ink-subtle: #9ca3af;
+    /* Ink — 浅色主题下所有用于图标的墨色至少 4.5:1（对白底） */
+    --ds-ink: #0d1117;
+    --ds-ink-muted: #596073;
+    --ds-ink-subtle: #6b7280;
 
     /* Edge */
-    --ds-edge: #e5e7eb;
-    --ds-edge-strong: #d1d5db;
+    --ds-edge: #e2e6f0;
+    --ds-edge-strong: #cdd3e0;
 
-    /* Accent */
+    /* Accent — electric indigo */
     --ds-accent: #6366f1;
     --ds-accent-hover: #4f46e5;
     --ds-accent-subtle: #eef2ff;
+    --ds-accent-glow: rgba(99, 102, 241, 0.15);
 
-    /* Semantic */
-    --ds-positive: #10b981;
+    /* Cyan — secondary tech accent */
+    --ds-cyan: #0e7490;
+    --ds-cyan-subtle: #ecfeff;
+    --ds-cyan-glow: rgba(6, 182, 212, 0.12);
+
+    /* Violet — tertiary tech accent */
+    --ds-violet: #7c3aed;
+    --ds-violet-subtle: #f5f3ff;
+
+    /* Semantic — 600/700 级，保证细线图标在浅底上可辨识 */
+    --ds-positive: #059669;
     --ds-positive-subtle: #ecfdf5;
-    --ds-negative: #ef4444;
+    --ds-negative: #dc2626;
     --ds-negative-subtle: #fef2f2;
-    --ds-warn: #f59e0b;
+    --ds-warn: #b45309;
     --ds-warn-subtle: #fffbeb;
 
     /* Layout */
@@ -39,24 +49,38 @@
     --ds-gap: 16px;
     --ds-gap-sm: 8px;
     --ds-gap-lg: 24px;
+
+    /* Gradients */
+    --ds-gradient-accent: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    --ds-gradient-cyan: linear-gradient(135deg, #06b6d4 0%, #6366f1 100%);
+    --ds-gradient-tech: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
+    --ds-gradient-surface: linear-gradient(180deg, rgba(238, 242, 255, 0.4) 0%, rgba(255, 255, 255, 0) 60%);
   }
 
   [data-theme="dark"] {
-    --ds-canvas: #0f1117;
-    --ds-surface: #181b24;
-    --ds-surface-raised: #1f232f;
-    --ds-surface-overlay: rgba(24, 27, 36, 0.9);
+    --ds-canvas: #0a0d14;
+    --ds-surface: #11141e;
+    --ds-surface-raised: #181c2a;
+    --ds-surface-overlay: rgba(17, 20, 30, 0.92);
 
-    --ds-ink: #f1f3f8;
-    --ds-ink-muted: #9ca3af;
-    --ds-ink-subtle: #6b7280;
+    --ds-ink: #eef0f7;
+    --ds-ink-muted: #8b92a5;
+    --ds-ink-subtle: #596073;
 
-    --ds-edge: #2d313e;
-    --ds-edge-strong: #3d4250;
+    --ds-edge: #232838;
+    --ds-edge-strong: #313848;
 
     --ds-accent: #818cf8;
     --ds-accent-hover: #a5b4fc;
-    --ds-accent-subtle: rgba(99, 102, 241, 0.12);
+    --ds-accent-subtle: rgba(99, 102, 241, 0.14);
+    --ds-accent-glow: rgba(129, 140, 248, 0.18);
+
+    --ds-cyan: #22d3ee;
+    --ds-cyan-subtle: rgba(34, 211, 238, 0.1);
+    --ds-cyan-glow: rgba(34, 211, 238, 0.15);
+
+    --ds-violet: #a78bfa;
+    --ds-violet-subtle: rgba(167, 139, 250, 0.1);
 
     --ds-positive: #34d399;
     --ds-positive-subtle: rgba(16, 185, 129, 0.12);
@@ -64,6 +88,11 @@
     --ds-negative-subtle: rgba(239, 68, 68, 0.12);
     --ds-warn: #fbbf24;
     --ds-warn-subtle: rgba(245, 158, 11, 0.12);
+
+    --ds-gradient-accent: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+    --ds-gradient-cyan: linear-gradient(135deg, #22d3ee 0%, #818cf8 100%);
+    --ds-gradient-tech: linear-gradient(135deg, #818cf8 0%, #a78bfa 50%, #22d3ee 100%);
+    --ds-gradient-surface: linear-gradient(180deg, rgba(99, 102, 241, 0.06) 0%, rgba(255, 255, 255, 0) 60%);
   }
 }
 
@@ -87,6 +116,67 @@
   :focus-visible {
     outline: 2px solid var(--ds-accent);
     outline-offset: 2px;
+  }
+}
+
+/* 浅色主题下 16px 细线图标在白底上视觉偏弱，轻微加粗描边提升可辨识度。
+   lucide 类名由运行时生成、Tailwind 扫不到，故刻意不放进 @layer（否则会被
+   tree-shaking 移除，同 charts.css）。只作用于图标 SVG，不影响图表。 */
+:root:not([data-theme="dark"]) svg.lucide {
+  stroke-width: 2.25;
+}
+
+/* 科技感工具类 */
+@layer utilities {
+  .tech-gradient-text {
+    background: var(--ds-gradient-tech);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .tech-gradient-bg {
+    background: var(--ds-gradient-accent);
+  }
+
+  .tech-gradient-border {
+    position: relative;
+  }
+  .tech-gradient-border::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: inherit;
+    background: var(--ds-gradient-tech);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0.4;
+  }
+
+  .tech-glow {
+    box-shadow: 0 0 24px var(--ds-accent-glow);
+  }
+
+  .tech-glow-sm {
+    box-shadow: 0 0 12px var(--ds-accent-glow);
+  }
+
+  .tech-scan-line {
+    position: relative;
+    overflow: hidden;
+  }
+  .tech-scan-line::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--ds-accent), transparent);
+    opacity: 0.5;
   }
 }
 

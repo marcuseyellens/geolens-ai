@@ -3,7 +3,65 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GeoLens AI</title>
+    <title>GeoLens AI — AI 推荐的是你的竞品，还是你？</title>
+    <meta name="description" content="GeoLens AI 是 AEO 平台。免注册输入网址，拿到 /100 分的站点就绪度与 1 条最高优先级修复建议。技术就绪 ≠ 被推荐，我们只报告可核验的公开事实。" />
+    <link rel="canonical" href="https://geolens.ai/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://geolens.ai/" />
+    <meta property="og:title" content="GeoLens AI — AI 推荐的是你的竞品，还是你？" />
+    <meta property="og:description" content="免注册检查站点对 AI 的就绪度，先看清品牌在 AI 回答里的真实可见性。" />
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "name": "GeoLens AI",
+          "url": "https://geolens.ai/",
+          "email": "support@geolens.ai",
+          "description": "面向品牌与增长团队的 AEO（Answer Engine Optimization）平台，报告品牌在 AI 生成式回答里可核验的公开事实。"
+        },
+        {
+          "@type": "SoftwareApplication",
+          "name": "GeoLens AI",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web",
+          "url": "https://geolens.ai/",
+          "description": "免注册检查站点对 AI 的抓取、理解与引用就绪度，输出 /100 分与 1 条首要修复建议；结果可生成免登录分享链接。",
+          "offers": [
+            { "@type": "Offer", "name": "免费站点检查", "price": "0", "priceCurrency": "USD" },
+            { "@type": "Offer", "name": "一次性深度审计", "price": "39", "priceCurrency": "USD" },
+            { "@type": "Offer", "name": "Starter 订阅监测", "price": "49", "priceCurrency": "USD" }
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "这和传统 SEO 工具有什么不同？",
+              "acceptedAnswer": { "@type": "Answer", "text": "传统工具看搜索排名与关键词；GeoLens 看 AI 生成式回答里是否出现品牌、位置与引用来源。两者度量对象不同，不能互相替代。" }
+            },
+            {
+              "@type": "Question",
+              "name": "免费检查需要注册吗？",
+              "acceptedAnswer": { "@type": "Answer", "text": "不需要。输入网址即可拿到 /100 分与 1 条首要建议，全程无登录、无邮箱、无信用卡，结果可生成分享链接。" }
+            },
+            {
+              "@type": "Question",
+              "name": "拿到高分，AI 就一定会推荐我吗？",
+              "acceptedAnswer": { "@type": "Answer", "text": "不会。技术就绪 ≠ 被推荐。分数只反映可抓取、可理解、可引用的技术条件，不预测任何模型的推荐结果。" }
+            },
+            {
+              "@type": "Question",
+              "name": "$39 一次性审计包含什么？",
+              "acceptedAnswer": { "@type": "Answer", "text": "30 个 buyer question 的真实回答、逐条证据下钻、人工复核后的修复清单与可直接发布的修复件。失败运行不计入分母，也不会收费。" }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
     <script>
       (function () {
         try {
@@ -18,7 +76,31 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <noscript>
+        <main>
+          <h1>AI 推荐的是你的竞品，还是你？</h1>
+          <p>GeoLens AI 是面向品牌与增长团队的 AEO（Answer Engine Optimization）平台。先看清品牌在 AI 生成式回答里的真实可见性，再决定改什么。输入网址即可免注册拿到 /100 分的站点就绪度与 1 条最高优先级修复建议。</p>
+          <p>技术就绪 ≠ 被推荐。我们只报告可核验的公开事实，不承诺排名或转化结果。</p>
+          <h2>价格与规格</h2>
+          <ul>
+            <li>免费站点检查：$0，免注册、免邮箱、免信用卡，结果可分享</li>
+            <li>一次性深度审计：$39，30 题真实回答、证据下钻与修复件</li>
+            <li>复扫 add-on：$19/月，同题重跑 matched comparison</li>
+            <li>订阅监测：Starter $49 / Growth $199 / Scale $410 每月</li>
+          </ul>
+          <h2>对比与选择</h2>
+          <p><a href="/compare">方案对比</a>：与手工核查、传统 SEO 工具按同一组维度逐项列出事实，便于直接引用。</p>
+          <p><a href="/pricing">定价与套餐</a> · <a href="/check">免费检查</a></p>
+          <h2 id="faq">常见问题</h2>
+          <dl>
+            <dt>免费检查需要注册吗？</dt><dd>不需要，输入网址即可拿到结果。</dd>
+            <dt>拿到高分，AI 就一定会推荐我吗？</dt><dd>不会。技术就绪 ≠ 被推荐。</dd>
+            <dt>失败运行会计费吗？</dt><dd>不会，失败运行不计入分母，也不占用配额。</dd>
+          </dl>
+        </main>
+      </noscript>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

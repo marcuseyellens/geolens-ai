@@ -1,3 +1,4 @@
+import { T } from "../i18n";
 import { useEffect, useState } from "react";
 import { Page, PageHeader, Card, Badge, Callout } from "../ds";
 import { api } from "../api";
@@ -27,6 +28,7 @@ export default function SettingsPage() {
   }, []);
 
   return (
+    <T>
     <Page measure="narrow">
       <PageHeader title="设置" description="管理 AI 模型接入和配置" />
 
@@ -92,5 +94,6 @@ export default function SettingsPage() {
         </p>
       </Card>
     </Page>
+    </T>
   );
 }

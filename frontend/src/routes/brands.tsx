@@ -1,3 +1,4 @@
+import { T } from "../i18n";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Page, PageHeader, Card, Button, TextField, TextArea, EmptyState, Badge, Spinner } from "../ds";
@@ -45,6 +46,7 @@ export default function BrandsPage() {
   };
 
   return (
+    <T>
     <Page>
       <PageHeader
         title="品牌管理"
@@ -153,7 +155,7 @@ export default function BrandsPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2 ml-4">
-                <Link to={`/brands/${brand.id}`}>
+                <Link to={`/app/brands/${brand.id}`}>
                   <Button variant="secondary" size="sm">
                     查看报告
                     <ArrowRight className="h-4 w-4" />
@@ -168,5 +170,6 @@ export default function BrandsPage() {
         </div>
       )}
     </Page>
+    </T>
   );
 }

@@ -58,12 +58,16 @@ func AllSourceClasses() []SourceClass {
 }
 
 // Citation 是答案实际展示出来的链接。它不代表答案依据的全部，更不代表训练数据（PRD §5.7）。
+// Δ-02 / EX-05：host 为精确 host（含子域名），registrable_domain 仅作展示分组，
+// 二者独立存储，禁止由 registrable_domain 反推 host，禁止继承排序权重。
 type Citation struct {
-	URL            string      `json:"url"`
-	Domain         string      `json:"domain"`
-	PagePath       string      `json:"page_path"`
-	SourceClass    SourceClass `json:"source_class"`
-	DirectCitation bool        `json:"direct_citation"`
+	URL               string      `json:"url"`
+	Domain            string      `json:"domain"`
+	PagePath          string      `json:"page_path"`
+	SourceClass       SourceClass `json:"source_class"`
+	DirectCitation    bool        `json:"direct_citation"`
+	Host              string      `json:"host,omitempty"`
+	RegistrableDomain string      `json:"registrable_domain,omitempty"`
 }
 
 // Mention 是三态分离的品牌识别结果（F-203 / §5.2）。三个布尔字段独立存储、独立计数、独立展示。
@@ -82,6 +86,7 @@ type Mention struct {
 }
 
 // RunAnswer 是一次采集的不可变原始证据（F-107）。所有聚合指标由它派生，可重算。
+// Δ-01：追加语言观测字段。RunAnswer 保持只追加、不 UPDATE（§2.2 不变式 / CI 断言）。
 type RunAnswer struct {
 	RunID            string         `json:"run_id"`
 	QuestionID       string         `json:"question_id"`
@@ -107,15 +112,28 @@ type RunAnswer struct {
 	CollectedAt        time.Time      `json:"collected_at"`
 	LatencyMS          int            `json:"latency_ms"`
 	Cost               float64        `json:"cost"`
+
+	// ---- Δ-01 / EX-01/EX-02 新增列（flag off 时一律不填充，故 omitempty）----
+	QueryLocale           string                `json:"query_locale,omitempty"`
+	RetrievalLocale       string                `json:"retrieval_locale,omitempty"`
+	RetrievalLocaleSource RetrievalLocaleSource `json:"retrieval_locale_source,omitempty"`
+	RetrievalConfidence   *float64              `json:"retrieval_confidence,omitempty"`
+	LocaleMismatch        bool                  `json:"locale_mismatch,omitempty"`
+	CrawlerVisitEvidence  CrawlerVisitEvidence  `json:"crawler_visit_evidence,omitempty"`
+	// Suspect / SuspectReason 是 Δ-05 批次标记（EX-11），与 valid 正交。
+	Suspect       bool          `json:"suspect,omitempty"`
+	SuspectReason SuspectReason `json:"suspect_reason,omitempty"`
 }
 
 // ---- 指标契约（F-2xx）----
 
 // MetricSet 是一组答案的聚合指标。分母恒为 usable（有效答案数），不是 planned。
+// Δ-05：Suspect 为第四数，与 valid 正交，不并入 usable / failed（EX-12）。
 type MetricSet struct {
 	Planned            int     `json:"planned"`
 	Usable             int     `json:"usable"`
 	Failed             int     `json:"failed"`
+	Suspect            int     `json:"suspect,omitempty"`
 	ForcedExcluded     int     `json:"forced_excluded"`
 	BrandCheckExcluded int     `json:"brand_check_excluded"`
 	Mentioned          int     `json:"mentioned"`
@@ -178,9 +196,9 @@ type ExecutiveSummary struct {
 // Visibility 是品牌可见性接口（F-305）的返回：Buyer Question 汇总 + 逐模型指标。
 // 刻意不合并成单一 AI 分数（DoD 6）。
 type Visibility struct {
-	BrandID string                         `json:"brand_id"`
-	Buyer   MetricSet                      `json:"buyer"`
-	Models  map[AIModelID]ModelMetricSet   `json:"models"`
+	BrandID string                       `json:"brand_id"`
+	Buyer   MetricSet                    `json:"buyer"`
+	Models  map[AIModelID]ModelMetricSet `json:"models"`
 }
 
 // Comparison 是 matched comparison：只比较两次都 valid 的问题子集（F-208 / §5.4）。
@@ -210,6 +228,8 @@ const (
 	CheckPass    CheckStatus = "pass"
 	CheckPartial CheckStatus = "partial"
 	CheckFail    CheckStatus = "fail"
+	// CheckUnknown 用于无法判定的检查项：不进分母、不扣分（A-WP-2.2）。
+	CheckUnknown CheckStatus = "unknown"
 )
 
 type AuditGroup string
@@ -221,15 +241,20 @@ const (
 	GroupHealth       AuditGroup = "basic_health"
 )
 
-// AuditGroupWeights 是 /100 分组权重（F-402 建议值：30 / 30 / 25 / 15）。
+// AuditGroupWeights 是 /100 分组权重。
+// A-WP-2.3 权重评审结论：内容信号 25 拆为「内容 15 + 索引准入 10」，总和仍为 100。
+// 该表是唯一配置入口：把 AdmissionWeights.Enabled 设为 false 即可整组下线。
 var AuditGroupWeights = map[AuditGroup]float64{
 	GroupCrawlability: 30,
 	GroupStructured:   30,
-	GroupContent:      25,
+	GroupContent:      15,
 	GroupHealth:       15,
+	GroupAdmission:    10,
 }
 
 // AuditCheck 是单个检查项，必须带证据与修复说明。
+// Δ-03：platform_hint 只记平台提示文案（仅线索，不作 pass/fail 依据），
+// observed_evidence 是实际观察证据；两者独立字段、互不填充（EX-08 / TC-16-12）。
 type AuditCheck struct {
 	ID       string      `json:"id"`
 	Group    AuditGroup  `json:"group"`
@@ -237,6 +262,11 @@ type AuditCheck struct {
 	Status   CheckStatus `json:"status"`
 	Evidence string      `json:"evidence"`
 	Fix      string      `json:"fix"`
+
+	PlatformHint         string               `json:"platform_hint,omitempty"`
+	ObservedEvidence     string               `json:"observed_evidence,omitempty"`
+	EvidenceSource       EvidenceSource       `json:"evidence_source,omitempty"`
+	CrawlerVisitEvidence CrawlerVisitEvidence `json:"crawler_visit_evidence,omitempty"`
 }
 
 // GroupScore 是分组得分。
@@ -258,6 +288,26 @@ type SiteScore struct {
 	Caveat    string       `json:"caveat"`
 	Source    string       `json:"source"`
 	AuditedAt time.Time    `json:"audited_at"`
+
+	// A-WP-1.4：任何含数字的组件都必须可查来源类型与方法论版本。
+	Provenance Provenance `json:"provenance"`
+	// A-WP-1.1：免费检查不要求登录，档案状态默认 unknown，不扣分。
+	ProfileStatus ProfileStatus `json:"profile_status"`
+	// A-WP-2 / 9.2：索引准入 8 类结论，每条带证据、修复说明、风险提示与来源链接。
+	Admission []AdmissionCheck `json:"admission,omitempty"`
+	// Δ-03：第 9 项爬虫访问证据分行结论（flag off 时整体缺失）。
+	CrawlerVisit *CrawlerVisitRow `json:"crawler_visit,omitempty"`
+}
+
+// CrawlerVisitRow 是 Δ-03 / EX-07/EX-08 的第 9 项结论。
+// PlatformHint 与 ObservedEvidence 是两条独立字段，互不填充。
+type CrawlerVisitRow struct {
+	Verdict          string `json:"verdict"`
+	PlatformHint     string `json:"platform_hint"`
+	ObservedEvidence string `json:"observed_evidence"`
+	EvidenceSource   string `json:"evidence_source"`
+	Disabled         bool   `json:"disabled,omitempty"`
+	FixAdvice        string `json:"fix_advice,omitempty"`
 }
 
 // ---- 报告与交付件契约（F-5xx）----
@@ -293,6 +343,8 @@ type FixItem struct {
 }
 
 // DiagnosticReport 是报告固定 7 节（F-501）。站点就绪度与 AI 可见性是两个独立字段。
+// Δ 批次追加：counts 四数、language_notice 跨语言并列观察、reference_only 独立参考区。
+// 渲染层需同时支持 1.0（三数，缺 suspect 按 0 展示并标注「旧口径」）与 1.1（§7）。
 type DiagnosticReport struct {
 	MethodologyVersion string                       `json:"methodology_version"`
 	BrandID            string                       `json:"brand_id"`
@@ -312,4 +364,10 @@ type DiagnosticReport struct {
 	Evidence           []RunAnswer                  `json:"evidence"`
 	Comparison         *Comparison                  `json:"comparison,omitempty"`
 	MethodologyNotes   []string                     `json:"methodology_notes"`
+
+	Counts         *Counts              `json:"counts,omitempty"`
+	LanguageNotice string               `json:"language_notice,omitempty"`
+	ReferenceOnly  []UserProvidedMetric `json:"reference_only,omitempty"`
+	// LegacyCounts 标注 1.0 口径的历史报告（缺 suspect），禁止静默重算。
+	LegacyCounts bool `json:"legacy_counts,omitempty"`
 }

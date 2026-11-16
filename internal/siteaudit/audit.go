@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/geolens/geolens/domain"
+	"github.com/geolens/geolens/internal/aeo"
 )
 
 // FetchResult 是一次页面抓取的原始证据。
@@ -213,19 +214,88 @@ func Audit(rawURL string, f Fetcher) (domain.SiteScore, error) {
 		)
 	}
 
+	// A-WP-2 / A-WP-9.2：把索引准入 8 类结论接入免注册检查。
+	// 这里只依据公开可访问形态的原始 HTML 判定，不执行 JS、不绕过任何反爬机制；
+	// 依赖真实渲染的检测器（anti_bot_wall / SPA thin_content）如实返回 unknown。
+	admissionChecks := aeo.InspectAdmission(aeo.PageSnapshot{
+		URL: base, FetchedURL: base + "/", Status: home.Status,
+		Body: home.Body, Rendered: false,
+	}, admissionConfig())
+	if !reachable {
+		// 站点不可达时不猜测页面形态：整组 unknown，不进分母、不扣分。
+		admissionChecks = aeo.InspectAdmission(aeo.PageSnapshot{URL: base, Status: home.Status}, disabledAdmissionConfig())
+	}
 	score := domain.SiteScore{
 		URL: base, Caveat: domain.ReadinessCaveat, AuditedAt: time.Now(),
 		Checks: checks, Source: "live",
+		Provenance:    domain.ObservedProvenance(len(checks)),
+		ProfileStatus: domain.ProfileUnknown,
+		Admission:     admissionChecks,
 	}
 	if !reachable {
 		score.Source = "unreachable"
 	}
-	score.Groups = groupScores(checks)
-	for _, g := range score.Groups {
-		score.Score += g.Earned
+	score.Checks = append(score.Checks, admissionAuditChecks(admissionChecks)...)
+	groups, activeWeight := groupScores(score.Checks)
+	score.Groups = groups
+	if activeWeight > 0 {
+		var earned float64
+		for _, g := range score.Groups {
+			earned += g.Earned
+		}
+		// 归一化到 /100：整组 unknown 时把该组权重移出分母，保证「unknown 不扣分」。
+		score.Score = earned / activeWeight * 100
 	}
-	score.TopFix = topFix(checks)
+	score.TopFix = topFix(score.Checks)
 	return score, nil
+}
+
+func admissionConfig() aeo.AdmissionConfig {
+	cfg := aeo.DefaultAdmissionConfig()
+	cfg.Enabled = domain.AdmissionWeights.Enabled
+	for d, off := range domain.AdmissionWeights.Disabled {
+		cfg.Disabled[d] = off
+	}
+	return cfg
+}
+
+func disabledAdmissionConfig() aeo.AdmissionConfig {
+	cfg := aeo.DefaultAdmissionConfig()
+	cfg.Enabled = false
+	return cfg
+}
+
+var admissionLabels = map[domain.AdmissionDetector]string{
+	domain.DetectAntiBotWall:    "反爬挑战页特征",
+	domain.DetectCaptcha:        "验证码门槛",
+	domain.DetectErrorPage:      "错误页",
+	domain.DetectThinContent:    "正文过薄",
+	domain.DetectSEOFiller:      "关键词堆砌",
+	domain.DetectNavigationOnly: "纯导航页",
+	domain.DetectUsefulInfo:     "可引用事实",
+	domain.DetectPIIExposure:    "个人信息暴露",
+}
+
+// admissionAuditChecks 把 4 态准入结论映射进 /100 检查项，unknown 保留为 4 态。
+func admissionAuditChecks(in []domain.AdmissionCheck) []domain.AuditCheck {
+	out := make([]domain.AuditCheck, 0, len(in))
+	for _, c := range in {
+		status := domain.CheckFail
+		switch c.Status {
+		case domain.AdmissionPass:
+			status = domain.CheckPass
+		case domain.AdmissionPartial:
+			status = domain.CheckPartial
+		case domain.AdmissionUnknown:
+			status = domain.CheckUnknown
+		}
+		out = append(out, domain.AuditCheck{
+			ID: "admission_" + string(c.Detector), Group: domain.GroupAdmission,
+			Label: admissionLabels[c.Detector], Status: status,
+			Evidence: c.Evidence, Fix: c.Fix,
+		})
+	}
+	return out
 }
 
 func min(a, b int) int {
@@ -240,20 +310,26 @@ var groupLabels = map[domain.AuditGroup]string{
 	domain.GroupStructured:   "结构化数据",
 	domain.GroupContent:      "内容信号",
 	domain.GroupHealth:       "基础健康",
+	domain.GroupAdmission:    "索引准入（风险提示）",
 }
 
 var groupOrder = []domain.AuditGroup{
-	domain.GroupCrawlability, domain.GroupStructured, domain.GroupContent, domain.GroupHealth,
+	domain.GroupCrawlability, domain.GroupStructured, domain.GroupContent,
+	domain.GroupHealth, domain.GroupAdmission,
 }
 
-func groupScores(checks []domain.AuditCheck) []domain.GroupScore {
+// groupScores 返回分组得分与「有效权重」。
+// unknown 检查项不进分母；整组 unknown 时该组不参与评分，其权重也从有效权重中
+// 剔除，由调用方归一化到 /100（A-WP-2.2 / §8 第 2 条）。
+func groupScores(checks []domain.AuditCheck) ([]domain.GroupScore, float64) {
 	out := []domain.GroupScore{}
+	activeWeight := 0.0
 	for _, g := range groupOrder {
 		weight := domain.AuditGroupWeights[g]
 		var total float64
 		count := 0
 		for _, c := range checks {
-			if c.Group != g {
+			if c.Group != g || c.Status == domain.CheckUnknown {
 				continue
 			}
 			count++
@@ -268,15 +344,21 @@ func groupScores(checks []domain.AuditCheck) []domain.GroupScore {
 		if count > 0 {
 			gs.Score = total / float64(count)
 			gs.Earned = weight * gs.Score
+			activeWeight += weight
 		}
 		out = append(out, gs)
 	}
-	return out
+	return out, activeWeight
 }
 
 // topFix 按对 AI 可见性影响最大的顺序给出 1 条 P1 建议（F-403）。
+// A-WP-2.3：索引准入类问题排 P1，但仍只返回 1 条最高优先级建议（A-WP-9.2）。
 func topFix(checks []domain.AuditCheck) string {
-	priority := []string{"llms_txt", "ai_crawlers", "json_ld", "comparison", "robots_txt", "faq", "value_prop", "schema_types"}
+	priority := []string{
+		"admission_anti_bot_wall", "admission_error_page", "admission_captcha",
+		"llms_txt", "ai_crawlers", "json_ld", "comparison", "robots_txt",
+		"faq", "value_prop", "schema_types",
+	}
 	byID := map[string]domain.AuditCheck{}
 	for _, c := range checks {
 		byID[c.ID] = c

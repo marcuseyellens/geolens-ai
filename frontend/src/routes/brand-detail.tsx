@@ -1,3 +1,4 @@
+import { T } from "../i18n";
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
@@ -134,11 +135,12 @@ export default function BrandDetailPage() {
   const recentResults = results.slice(0, 10);
 
   return (
+    <T>
     <Page>
       <PageHeader
         title={brand.name}
         description={brand.description || brand.website}
-        back={<PageBackLink to="/brands">返回品牌列表</PageBackLink>}
+        back={<PageBackLink to="/app/brands">返回品牌列表</PageBackLink>}
         actions={
           <>
             <Button onClick={() => setShowQueryForm(!showQueryForm)}>
@@ -146,7 +148,7 @@ export default function BrandDetailPage() {
               添加检测问题
             </Button>
             <Button variant="primary">
-              <Link to={`/brands/${brand.id}/diagnostic`} className="flex items-center">
+              <Link to={`/app/brands/${brand.id}/diagnostic`} className="flex items-center">
                 <FileBarChart className="h-4 w-4 mr-2" />
                 诊断报告
               </Link>
@@ -369,5 +371,6 @@ export default function BrandDetailPage() {
         </Card>
       )}
     </Page>
+    </T>
   );
 }

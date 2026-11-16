@@ -9,56 +9,126 @@ import (
 	"github.com/geolens/geolens/application"
 	"github.com/geolens/geolens/domain"
 	"github.com/geolens/geolens/internal/aimodel"
+	"github.com/geolens/geolens/internal/auth"
+	"github.com/geolens/geolens/internal/billing"
+	"github.com/geolens/geolens/internal/collector"
+	"github.com/geolens/geolens/internal/governance"
+	"github.com/geolens/geolens/internal/growth"
+	"github.com/geolens/geolens/internal/mcpserver"
+	"github.com/geolens/geolens/internal/monitor"
+	"github.com/geolens/geolens/internal/omnigraph"
 	"github.com/gin-gonic/gin"
 )
 
+// Platform 聚合基线 WBS WP-1/2/3/5/7/8 的运行时实例。
+type Platform struct {
+	Governance *governance.Engine
+	Graph      *omnigraph.Store
+	Collector  *collector.Framework
+	MCP        *mcpserver.Server
+	Billing    *billing.Engine
+	Monitor    *monitor.Engine
+	Auth       *auth.Engine
+	AdminToken string
+}
+
 // Server 持有所有 handler 依赖
 type Server struct {
-	detection *application.DetectionService
-	engine    *aimodel.Engine
+	detection  *application.DetectionService
+	engine     *aimodel.Engine
+	growth     *growth.Store
+	platform   *Platform
+	mcp        *mcpserver.Server
+	auth       *auth.Engine
+	adminToken string
+	billing    *billing.Engine
+	monitor    *monitor.Engine
+	governance *governance.Engine
+	graph      *omnigraph.Store
+	collector  *collector.Framework
 }
 
-// NewServer 创建 API server
-func NewServer(detection *application.DetectionService, engine *aimodel.Engine) *Server {
-	return &Server{detection: detection, engine: engine}
+// NewServer 创建 API server。platform 为 nil 时保持旧行为（仅 WP-6 + 增量 WBS 端点）。
+func NewServer(detection *application.DetectionService, engine *aimodel.Engine, growthStore *growth.Store, platform ...*Platform) *Server {
+	s := &Server{detection: detection, engine: engine, growth: growthStore}
+	if len(platform) > 0 && platform[0] != nil {
+		p := platform[0]
+		s.platform = p
+		s.mcp = p.MCP
+		s.adminToken = p.AdminToken
+		s.auth = p.Auth
+		s.billing = p.Billing
+		s.monitor = p.Monitor
+		s.governance = p.Governance
+		s.graph = p.Graph
+		s.collector = p.Collector
+	}
+	return s
 }
 
-// RegisterRoutes 注册所有 API 路由
+// RegisterRoutes 注册所有 API 路由。
+//
+// 鉴权边界（fail-closed）：除显式列出的匿名端点外，所有 /api/v1 接口都要求
+// 有效会话；管理端点额外要求 admin 角色或 X-Admin-Token。account_id 一律取自
+// 会话，客户端传参不再被信任。/mcp 使用独立的只读 Agent token，不走用户会话。
 func (s *Server) RegisterRoutes(r *gin.Engine) {
 	api := r.Group("/api/v1")
+
+	// ---- 匿名可用：健康检查、登录注册、免费检查、分享、埋点、公开自检 ----
+	api.GET("/health", s.health)
+	api.GET("/models", s.listModels)
+	api.POST("/auth/login", s.authLogin)
+	api.POST("/auth/register", s.authRegister)
+	api.POST("/site-audits", s.auditSite)
+	api.POST("/shares", s.createShare)
+	api.GET("/shares/:token", s.getShare)
+	api.POST("/events", s.recordEvent)
+	api.GET("/self-checks", s.selfChecks)
+	api.GET("/acceptance-checklist", s.acceptanceChecklist)
+	api.GET("/mcp/info", s.mcpInfo)
+	api.POST("/redeem", s.redeem)
+
+	// ---- 需要登录 ----
+	protected := api.Group("", s.RequireAuth())
 	{
+		protected.GET("/auth/me", s.authMe)
+		protected.POST("/auth/logout", s.authLogout)
+
 		// 品牌 CRUD
-		api.GET("/brands", s.listBrands)
-		api.POST("/brands", s.createBrand)
-		api.GET("/brands/:id", s.getBrand)
-		api.PUT("/brands/:id", s.updateBrand)
-		api.DELETE("/brands/:id", s.deleteBrand)
+		protected.GET("/brands", s.listBrands)
+		protected.POST("/brands", s.createBrand)
+		protected.GET("/brands/:id", s.getBrand)
+		protected.PUT("/brands/:id", s.updateBrand)
+		protected.DELETE("/brands/:id", s.deleteBrand)
 
 		// 查询管理
-		api.GET("/brands/:id/queries", s.listQueries)
-		api.POST("/brands/:id/queries", s.createQuery)
-		api.DELETE("/brands/:id/queries/:qid", s.deleteQuery)
+		protected.GET("/brands/:id/queries", s.listQueries)
+		protected.POST("/brands/:id/queries", s.createQuery)
+		protected.DELETE("/brands/:id/queries/:qid", s.deleteQuery)
 
 		// 检测执行
-		api.POST("/brands/:id/queries/:qid/detect", s.runDetection)
+		protected.POST("/brands/:id/queries/:qid/detect", s.runDetection)
 
 		// 报告
-		api.GET("/brands/:id/report", s.getReport)
-		api.GET("/brands/:id/results", s.listResults)
-		
-		// 诊断报告
-		api.GET("/brands/:id/diagnose", s.getDiagnosticReport)
+		protected.GET("/brands/:id/report", s.getReport)
+		protected.GET("/brands/:id/results", s.listResults)
+		protected.GET("/brands/:id/diagnose", s.getDiagnosticReport)
+		protected.GET("/brands/:id/visibility", s.getVisibility)
 
-		// 品牌可见性（F-305）
-		api.GET("/brands/:id/visibility", s.getVisibility)
-
-		// 免注册站点检查（F-401~F-404）
-		api.POST("/site-audits", s.auditSite)
-
-		// 模型配置
-		api.GET("/models", s.listModels)
-		api.GET("/health", s.health)
+		// 漏斗与增量 WBS
+		protected.GET("/funnel", s.getFunnel)
+		protected.POST("/profile-compare", s.compareProfile)
+		protected.POST("/question-sets", s.generateQuestionSets)
 	}
+
+	// ---- 仅管理员 ----
+	admin := api.Group("", s.RequireAdmin())
+
+	// 基线 WBS WP-1/2/3/5/7/8 运行时端点（含根路径 /mcp）
+	s.registerPlatformRoutes(api, protected, admin, r)
+
+	// 规格书 Δ-01~Δ-07 / §3.1 端点（受 feature flag 总闸控制）。
+	s.registerDeltaRoutes(protected, r)
 }
 
 // ---- Brand handlers ----

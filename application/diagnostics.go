@@ -25,7 +25,28 @@ func hostOf(raw string) string {
 	return strings.ToLower(u.Hostname())
 }
 
+// SourceClassRules 是可替换的来源分类启发式（A-WP-5.3）。
+// 只使用通用语义词，绝不内置任何具体站点域名：把某个站点写成规则属于
+// 「把推导写成平台规则」，且无法通过「代码中无来源占比常量」的 CI 断言。
+type SourceClassRules struct {
+	Community    []string
+	Directory    []string
+	NewsResearch []string
+	Roundup      []string
+}
+
+var DefaultSourceClassRules = SourceClassRules{
+	Community:    []string{"forum", "community", "discuss"},
+	Directory:    []string{"directory", "listing", "catalog"},
+	NewsResearch: []string{"news", "research", "report", "journal", "study"},
+	Roundup:      []string{"best", "top", "roundup", "guide", "review"},
+}
+
 func classifySource(host, brandHost string, competitors []string) domain.SourceClass {
+	return classifySourceWith(DefaultSourceClassRules, host, brandHost, competitors)
+}
+
+func classifySourceWith(rules SourceClassRules, host, brandHost string, competitors []string) domain.SourceClass {
 	if host == "" {
 		return domain.SourceOther
 	}
@@ -38,24 +59,19 @@ func classifySource(host, brandHost string, competitors []string) domain.SourceC
 			return domain.SourceCompetitorSite
 		}
 	}
-	for _, k := range []string{"reddit.com", "quora.com", "forum", "community", "discuss"} {
-		if strings.Contains(host, k) {
-			return domain.SourceCommunity
-		}
-	}
-	for _, k := range []string{"g2.com", "capterra", "trustradius", "producthunt", "directory"} {
-		if strings.Contains(host, k) {
-			return domain.SourceDirectory
-		}
-	}
-	for _, k := range []string{"news", "research", "report", "journal", "study"} {
-		if strings.Contains(host, k) {
-			return domain.SourceNewsResearch
-		}
-	}
-	for _, k := range []string{"best", "top", "roundup", "guide", "review"} {
-		if strings.Contains(host, k) {
-			return domain.SourceIndependentRoundup
+	for _, group := range []struct {
+		class domain.SourceClass
+		keys  []string
+	}{
+		{domain.SourceCommunity, rules.Community},
+		{domain.SourceDirectory, rules.Directory},
+		{domain.SourceNewsResearch, rules.NewsResearch},
+		{domain.SourceIndependentRoundup, rules.Roundup},
+	} {
+		for _, k := range group.keys {
+			if strings.Contains(host, k) {
+				return group.class
+			}
 		}
 	}
 	return domain.SourceOther
@@ -181,6 +197,10 @@ func buildComparison(answers []domain.RunAnswer) *domain.Comparison {
 
 func methodologyNotes() []string {
 	return []string{
+		domain.NeutralityStatement,
+		"任一含数字的组件标注 source_type 与 methodology_version；三类来源分表展示，不合并。",
+		"任一占比伴随 n_valid 与采集窗口；来源结构仅代表本次采样。",
+		"页面质量为概率性风险提示，阈值由本平台设定，非平台规则。",
 		"planned / usable / failed 三数并列展示，分母恒为有效答案数。",
 		"失败、超时、限流、解析失败与脏数据一律排除，不记为「未提及」。",
 		"mentioned / recommended / linked 三态独立计数，彼此不互相补算。",

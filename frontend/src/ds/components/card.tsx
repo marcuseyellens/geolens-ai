@@ -9,8 +9,9 @@ export function Card({ className, raised, ...props }: CardProps) {
   return (
     <div
       className={cn(
-        "rounded-ds-lg bg-surface border border-edge p-5",
-        raised && "shadow-sm",
+        "relative rounded-ds-lg bg-surface border border-edge p-5 overflow-hidden",
+        "before:absolute before:inset-0 before:bg-[image:var(--ds-gradient-surface)] before:pointer-events-none",
+        raised && "shadow-lg shadow-accent/5 border-edge-strong",
         className,
       )}
       {...props}
@@ -29,10 +30,10 @@ export function Badge({
 }) {
   const tones: Record<string, string> = {
     neutral: "bg-canvas text-ink-muted border-edge",
-    positive: "bg-positive-subtle text-positive border-transparent",
-    negative: "bg-negative-subtle text-negative border-transparent",
-    warn: "bg-warn-subtle text-warn border-transparent",
-    accent: "bg-accent-subtle text-accent border-transparent",
+    positive: "bg-positive-subtle text-positive border-positive/20",
+    negative: "bg-negative-subtle text-negative border-negative/20",
+    warn: "bg-warn-subtle text-warn border-warn/20",
+    accent: "bg-accent-subtle text-accent border-accent/20",
   };
   return (
     <span
@@ -59,13 +60,19 @@ export function StatCard({
   icon?: React.ReactNode;
 }) {
   return (
-    <Card>
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-ink-muted">{label}</p>
-        {icon && <div className="text-ink-subtle">{icon}</div>}
+    <Card raised>
+      <div className="relative flex items-start justify-between">
+        <div className="min-w-0">
+          <p className="text-sm text-ink-muted">{label}</p>
+          <p className="mt-2 text-2xl font-bold text-ink tracking-tight">{value}</p>
+          {hint && <p className="mt-1 text-xs text-ink-subtle truncate">{hint}</p>}
+        </div>
+        {icon && (
+          <div className="flex items-center justify-center h-10 w-10 rounded-ds bg-[image:var(--ds-gradient-accent)] text-white shadow-md shadow-accent/20 shrink-0">
+            {icon}
+          </div>
+        )}
       </div>
-      <p className="mt-2 text-2xl font-semibold text-ink">{value}</p>
-      {hint && <p className="mt-1 text-xs text-ink-subtle">{hint}</p>}
     </Card>
   );
 }

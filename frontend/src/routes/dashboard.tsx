@@ -1,7 +1,8 @@
+import { T } from "../i18n";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Page, PageHeader, StatCard, Card, EmptyState, Button, Badge, Spinner, Callout } from "../ds";
-import { Target, TrendingUp, Eye, Zap } from "lucide-react";
+import { Crosshair, TrendingUp, ScanEye, Cpu } from "lucide-react";
 import { api } from "../api";
 import type { Brand, ModelInfo } from "../types";
 import { MODEL_LABELS } from "../types";
@@ -51,12 +52,13 @@ export default function DashboardPage() {
   const totalBrands = brands.length;
 
   return (
+    <T>
     <Page>
       <PageHeader
         title="概览"
         description="监测你的品牌在各大 AI 模型中的推荐表现"
         actions={
-          <Link to="/brands">
+          <Link to="/app/brands">
             <Button>管理品牌</Button>
           </Link>
         }
@@ -77,19 +79,19 @@ export default function DashboardPage() {
             <StatCard
               label="品牌数"
               value={totalBrands}
-              icon={<Target className="h-5 w-5" />}
+              icon={<Crosshair className="h-5 w-5" />}
               hint="正在追踪的品牌"
             />
             <StatCard
               label="已接入模型"
               value={enabledModels.length}
-              icon={<Zap className="h-5 w-5" />}
+              icon={<Cpu className="h-5 w-5" />}
               hint={`共 ${models.length} 个可用`}
             />
             <StatCard
               label="检测维度"
               value="5"
-              icon={<Eye className="h-5 w-5" />}
+              icon={<ScanEye className="h-5 w-5" />}
               hint="位置、情感、竞品等"
             />
             <StatCard
@@ -122,7 +124,7 @@ export default function DashboardPage() {
           <Card>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-medium text-ink">品牌列表</h2>
-              <Link to="/brands">
+              <Link to="/app/brands">
                 <Button variant="ghost" size="sm">查看全部</Button>
               </Link>
             </div>
@@ -131,7 +133,7 @@ export default function DashboardPage() {
                 title="还没有添加品牌"
                 description="添加你的品牌，开始检测在 AI 模型中的推荐表现"
                 action={
-                  <Link to="/brands">
+                  <Link to="/app/brands">
                     <Button>添加品牌</Button>
                   </Link>
                 }
@@ -141,7 +143,7 @@ export default function DashboardPage() {
                 {brands.slice(0, 5).map((brand) => (
                   <Link
                     key={brand.id}
-                    to={`/brands/${brand.id}`}
+                    to={`/app/brands/${brand.id}`}
                     className="flex items-center justify-between p-3 rounded-ds border border-edge hover:border-edge-strong transition-colors"
                   >
                     <div>
@@ -161,5 +163,6 @@ export default function DashboardPage() {
         </>
       )}
     </Page>
+    </T>
   );
 }

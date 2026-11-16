@@ -208,8 +208,8 @@ export interface Visibility {
   models: Record<AIModelID, ModelMetricSet>;
 }
 
-export type CheckStatus = "pass" | "partial" | "fail";
-export type AuditGroup = "crawlability" | "structured_data" | "content_signals" | "basic_health";
+export type CheckStatus = "pass" | "partial" | "fail" | "unknown";
+export type AuditGroup = "crawlability" | "structured_data" | "content_signals" | "basic_health" | "index_admission";
 
 export interface AuditCheck {
   id: string;
@@ -218,6 +218,40 @@ export interface AuditCheck {
   status: CheckStatus;
   evidence: string;
   fix: string;
+  // Δ-03 / EX-08：平台提示与实际观察两行独立字段，互不填充。
+  platform_hint?: string;
+  observed_evidence?: string;
+  evidence_source?: string;
+  crawler_visit_evidence?: "pass" | "partial" | "fail" | "unknown";
+}
+
+// Δ-03 / EX-07：第 9 项「爬虫访问证据」结论，结果页分行渲染。
+export interface CrawlerVisitRow {
+  verdict: "pass" | "partial" | "fail" | "unknown";
+  platform_hint: string;
+  observed_evidence: string;
+  evidence_source: string;
+  disabled?: boolean;
+  fix_advice?: string;
+}
+
+export type AdmissionStatus = "pass" | "partial" | "fail" | "unknown";
+
+export interface Provenance {
+  source_type: string;
+  methodology_version: string;
+  n_valid: number;
+  window?: string;
+}
+
+export interface AdmissionCheck {
+  detector: string;
+  status: AdmissionStatus;
+  evidence: string;
+  fix: string;
+  risk_notice: string;
+  source_url: string;
+  provenance: Provenance;
 }
 
 export interface GroupScore {
@@ -237,6 +271,56 @@ export interface SiteScore {
   caveat: string;
   source: string;
   audited_at: string;
+  provenance?: Provenance;
+  profile_status?: string;
+  admission?: AdmissionCheck[];
+  // Δ-03：feature flag on 时返回第 9 项分行结论；off 时字段整体缺失。
+  crawler_visit?: CrawlerVisitRow;
+}
+
+// ---- 增量 WBS A-WP-1/7/9 的 API 契约 ----
+export interface SelfCheckResult {
+  id: string;
+  name: string;
+  passed: boolean;
+  details: string[];
+}
+
+export interface SelfChecksResponse {
+  results: SelfCheckResult[];
+  all_passed: boolean;
+  provenance: Provenance;
+  methodology: string[];
+}
+
+export interface AcceptanceItem {
+  id: number;
+  criterion: string;
+  passed: boolean;
+  evidence?: string[];
+}
+
+export interface AcceptanceResponse {
+  items: AcceptanceItem[];
+  prices: Record<string, number>;
+  provenance: Provenance;
+  methodology_version: string;
+}
+
+export interface GeneratedQuestion {
+  id: string;
+  text: string;
+  intent: string;
+  question_set_type: string;
+  is_brand_check: boolean;
+}
+
+export interface QuestionSetResponse {
+  question_set_type: string;
+  questions: GeneratedQuestion[];
+  count: number;
+  provenance: Provenance;
+  note: string;
 }
 
 export type ArtifactType = 
@@ -283,6 +367,30 @@ export interface DiagnosticReport {
   evidence: RunAnswer[];
   comparison?: Comparison;
   methodology_notes: string[];
+  // Δ 批次（flag on 时追加）：四数 counts、跨语言并列观察、独立参考区。
+  counts?: Counts;
+  language_notice?: string;
+  reference_only?: UserProvidedMetric[];
+  legacy_counts?: boolean;
+}
+
+// Δ-05 / EX-12：四数互不折算，suspect 不并入 usable / failed。
+export interface Counts {
+  planned: number;
+  usable: number;
+  failed: number;
+  suspect: number;
+}
+
+// Δ-02 / EX-06：独立参考区，不与业务指标同列求平均。
+export interface UserProvidedMetric {
+  metric_id: number;
+  project_id: number;
+  metric_type: string;
+  value: number;
+  source_type: string;
+  disclaimer: string;
+  created_at: string;
 }
 
 export interface ModelInfo {
@@ -320,3 +428,272 @@ export const INTENT_LABELS: Record<QueryIntent, string> = {
   best: "最佳类",
   alternative: "替代品类",
 };
+
+// ---- WP-6.6 转化漏斗 ----
+export interface FunnelStats {
+  steps: string[];
+  counts: Record<string, number>;
+  conversions: Record<string, number>;
+  baselines: Record<string, number>;
+  total_events: number;
+  unique_days: number;
+  since: string;
+}
+
+export const FUNNEL_LABELS: Record<string, string> = {
+  visit: "访问",
+  check: "发起检查",
+  result: "得到结果",
+  share: "生成分享",
+  signup: "注册",
+  checkout_39: "购买审计",
+  subscribe: "订阅",
+};
+
+// ---- 基线 WBS WP-1/2/3/5/7/8 平台运行时 ----
+
+export type TaskKind = "collect" | "judge_mention" | "judge_recommend" | "judge_link" | "generate_fix";
+export type PlanID = "free" | "one_time" | "rescan" | "starter" | "growth" | "scale";
+export type PaymentKind = "one_time" | "subscription" | "add_on";
+export type PaymentStatus = "pending" | "succeeded" | "failed" | "refunded";
+
+export interface RouteRule {
+  task: TaskKind;
+  channel: "low_cost" | "strong_model";
+  model: string;
+  estimated_cost: number;
+  quality_critical?: boolean;
+}
+
+export interface BudgetState {
+  limit_usd: number;
+  spent_usd: number;
+  tripped: boolean;
+  rejected_runs: number;
+  tripped_events: number;
+  tripped_at?: string;
+}
+
+export interface RunPentad {
+  run_id: string;
+  operator: string;
+  task: TaskKind;
+  change: string;
+  cost: number;
+  outcome: string;
+  channel: string;
+  at: string;
+  retry_of?: string;
+}
+
+export interface OperatorSummary {
+  operator: string;
+  runs: number;
+  cost_usd: number;
+  rejected: number;
+}
+
+export interface GovernanceOverview {
+  routes: RouteRule[];
+  budget: BudgetState;
+  pentads: RunPentad[];
+  operators: OperatorSummary[];
+  pending: { run_id: string; resume_at: string }[];
+  events: { kind: string; spent_usd: number; limit_usd: number; at: string }[];
+  methodology: string;
+  provenance: Provenance;
+}
+
+export interface GraphOverview {
+  ontology: string[];
+  nodes: number;
+  edges: number;
+  merges: { id: string; branch_id: string; operator: string; at: string; rolled_back: boolean }[];
+  note: string;
+}
+
+export interface HybridHit {
+  id: string;
+  kind: string;
+  label: string;
+  struct_score: number;
+  text_score: number;
+  sim_score: number;
+  score: number;
+}
+
+export interface MarginRow {
+  channel: string;
+  platform: string;
+  runs: number;
+  valid_runs: number;
+  cost_usd: number;
+}
+
+export interface BatchReport {
+  total: number;
+  valid: number;
+  failed: number;
+  success_rate: number;
+  cost_usd: number;
+  run_ids: string[];
+}
+
+export interface CollectorOverview {
+  adapters: string[];
+  policy: { public_only: boolean; allow_login_state: boolean; allow_paywall_bypass: boolean };
+  margins: MarginRow[];
+  runs: number;
+  simulated: boolean;
+  note: string;
+}
+
+export interface Entitlement {
+  plan: PlanID;
+  daily_queries: number;
+  monthly_runs: number;
+  projects: number;
+  one_time_questions: number;
+  mcp_enabled: boolean;
+  api_enabled: boolean;
+  alerts_enabled: boolean;
+  custom_export: boolean;
+  price_usd: number;
+}
+
+export interface QuotaUsage {
+  plan: PlanID;
+  daily_used: number;
+  daily_limit: number;
+  monthly_used: number;
+  monthly_limit: number;
+  failed_not_billed: number;
+  period: string;
+}
+
+export interface QuotaDecision {
+  allowed: boolean;
+  reason?: string;
+  upgrade_to?: PlanID;
+  message: string;
+}
+
+export interface Order {
+  id: string;
+  account_id: string;
+  plan: PlanID;
+  kind: PaymentKind;
+  amount_usd: number;
+  status: PaymentStatus;
+  created_at: string;
+  settled_at?: string;
+  idempotency_key: string;
+}
+
+export interface Invoice {
+  id: string;
+  account_id: string;
+  period: string;
+  amount_usd: number;
+  runs_billed: number;
+  failed_runs_not_billed: number;
+  created_at: string;
+}
+
+export interface BillingPanel {
+  usage: QuotaUsage;
+  invoices: Invoice[];
+  orders: Order[];
+  note: string;
+  provenance: Provenance;
+}
+
+export interface BoardRow {
+  key: string;
+  label: string;
+  value: number;
+  unit: string;
+  provenance: Provenance;
+}
+
+export interface MonitorAlert {
+  metric: string;
+  value: number;
+  threshold: number;
+  message: string;
+}
+
+export interface MonitorSnapshot {
+  collection_success_rate: number;
+  daily_cost_usd: number;
+  budget_trips: number;
+  payment_failure_rate: number;
+  funnel_conversion: number;
+  alerts: MonitorAlert[];
+  provenance: Provenance;
+  at?: string;
+}
+
+export interface MonitorResponse {
+  snapshot: MonitorSnapshot;
+  boards: BoardRow[];
+  history: MonitorSnapshot[];
+  note: string;
+}
+
+export interface ReleaseCheckItem {
+  id: string;
+  title: string;
+  status: "pass" | "fail";
+  evidence: string[];
+}
+
+export interface ReleaseResponse {
+  items: ReleaseCheckItem[];
+  all_passed: boolean;
+  note: string;
+}
+
+export interface LayerReport {
+  layer: string;
+  name: string;
+  metrics: Record<string, number>;
+  evidence_ids: string[];
+  provenance: Provenance;
+}
+
+export interface ChainReport {
+  brand_id: string;
+  layers: LayerReport[];
+  passed: boolean;
+  issues: string[];
+  usage: QuotaUsage;
+}
+
+export interface MCPInfo {
+  server: string;
+  version: string;
+  endpoint: string;
+  auth: string;
+  tools: string[];
+  read_only: boolean;
+  methodology: string;
+  note: string;
+}
+
+// ---- 会话与鉴权 ----
+
+export type UserRole = "user" | "admin";
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  role: UserRole;
+  account_id: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: AuthUser;
+  expires_at?: string;
+}

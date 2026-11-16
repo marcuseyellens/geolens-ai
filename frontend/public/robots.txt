@@ -1,0 +1,24 @@
+# GeoLens AI — 公开页面允许 AI 抓取
+# 控制台 /app 与 /api 不属于可引用内容，其余页面保持开放。
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /app/
+
+Sitemap: https://geolens.ai/sitemap.xml

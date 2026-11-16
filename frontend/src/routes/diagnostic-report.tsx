@@ -1,11 +1,13 @@
+import { T } from "../i18n";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { 
   Card, Badge, Spinner, Callout, Table, Button 
 } from "../ds";
-import { 
+import {
   AlertTriangle, Globe, Users, Link as LinkIcon, Copy, Download,
-  Eye, X, ExternalLink, ChevronRight, Search
+  Eye, X, ExternalLink, ChevronRight, Search, ClipboardList, Wrench,
+  FileCode2, Network, Lightbulb, TrendingUp, Target, ScanLine
 } from "lucide-react";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -69,6 +71,7 @@ export default function DiagnosticReportPage() {
   }
 
   return (
+    <T>
     <div className="space-y-6">
       {/* 头部信息 */}
       <div className="flex items-center justify-between">
@@ -83,17 +86,23 @@ export default function DiagnosticReportPage() {
 
       {/* 执行摘要（F-501.1） */}
       <Card raised>
-        <h2 className="text-lg font-semibold mb-4">执行摘要</h2>
+        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <Lightbulb className="h-5 w-5 text-accent" />
+          执行摘要
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <SummaryBlock label="现状" text={report.executive_summary.current} tone="accent" />
-          <SummaryBlock label="差距" text={report.executive_summary.gap} tone="warn" />
-          <SummaryBlock label="下一步" text={report.executive_summary.next} tone="positive" />
+          <SummaryBlock label="现状" text={report.executive_summary.current} tone="accent" icon={<TrendingUp className="h-4 w-4" />} />
+          <SummaryBlock label="差距" text={report.executive_summary.gap} tone="warn" icon={<AlertTriangle className="h-4 w-4" />} />
+          <SummaryBlock label="下一步" text={report.executive_summary.next} tone="positive" icon={<Target className="h-4 w-4" />} />
         </div>
       </Card>
 
       {/* 方法论说明 */}
       <Card>
-        <h2 className="text-lg font-semibold mb-3">方法论说明</h2>
+        <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+          <ClipboardList className="h-5 w-5 text-accent" />
+          方法论说明
+        </h2>
         <ul className="space-y-2 text-sm text-ink-muted">
           {report.methodology_notes.map((note, i) => (
             <li key={i} className="flex items-start">
@@ -104,9 +113,15 @@ export default function DiagnosticReportPage() {
         </ul>
       </Card>
 
+      {/* Δ 批次：四数隔离、跨语言并列观察、独立参考区（flag off 时整体隐藏） */}
+      {report.counts && <DeltaPanels report={report} />}
+
       {/* 核心指标概览 */}
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">核心指标概览</h2>
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <ScanLine className="h-5 w-5 text-accent" />
+          核心指标概览
+        </h2>
         <Button variant="secondary" size="sm" onClick={() => setEvidenceOpen(true)}>
           <Eye className="h-4 w-4" />
           看证据
@@ -163,14 +178,17 @@ export default function DiagnosticReportPage() {
         {/* 站点就绪度 */}
         {report.site_readiness && (
           <Card>
-            <h2 className="text-lg font-semibold mb-4 flex items-center">
-              <Globe className="w-5 h-5 mr-2" />
-              站点就绪度 /100
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Globe className="h-5 w-5 text-accent" />
+              站点就绪度
             </h2>
             
-            <div className="mb-4">
-              <div className="text-3xl font-bold">{report.site_readiness.score.toFixed(1)}</div>
-              <div className="text-sm text-ink-muted mt-1">{report.site_readiness.caveat}</div>
+            <div className="mb-4 flex items-center gap-4">
+              <ScoreRing score={report.site_readiness.score} />
+              <div>
+                <div className="text-sm text-ink-muted">{report.site_readiness.caveat}</div>
+                <div className="text-xs text-ink-subtle mt-1">数据来源：{report.site_readiness.source}</div>
+              </div>
             </div>
             
             <div className="space-y-3">
@@ -180,9 +198,9 @@ export default function DiagnosticReportPage() {
                     <span>{group.label}</span>
                     <span>{group.earned.toFixed(1)}/{group.weight}</span>
                   </div>
-                  <div className="w-full bg-canvas rounded-full h-2">
+                  <div className="w-full bg-canvas rounded-full h-2 overflow-hidden">
                     <div 
-                      className="bg-accent h-2 rounded-full" 
+                      className="h-2 rounded-full bg-[image:var(--ds-gradient-accent)]" 
                       style={{ width: `${(group.earned / group.weight) * 100}%` }}
                     ></div>
                   </div>
@@ -204,8 +222,8 @@ export default function DiagnosticReportPage() {
 
         {/* Share of Voice */}
         <Card>
-          <h2 className="text-lg font-semibold mb-4 flex items-center">
-            <Users className="w-5 h-5 mr-2" />
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Users className="h-5 w-5 text-accent" />
             Share of Voice
           </h2>
           
@@ -237,7 +255,10 @@ export default function DiagnosticReportPage() {
 
       {/* 按意图分类的指标 */}
       <Card>
-        <h2 className="text-lg font-semibold mb-4">按提问意图分类</h2>
+        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <Target className="h-5 w-5 text-accent" />
+          按提问意图分类
+        </h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {Object.entries(report.buyer_questions).map(([intent, metrics]) => (
@@ -264,8 +285,8 @@ export default function DiagnosticReportPage() {
 
       {/* 引用地图 */}
       <Card>
-        <h2 className="text-lg font-semibold mb-4 flex items-center">
-          <LinkIcon className="w-5 h-5 mr-2" />
+        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <Network className="h-5 w-5 text-accent" />
           引用地图
         </h2>
         
@@ -336,7 +357,10 @@ export default function DiagnosticReportPage() {
 
       {/* 修复建议清单 */}
       <Card>
-        <h2 className="text-lg font-semibold mb-4">修复建议清单</h2>
+        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <Wrench className="h-5 w-5 text-accent" />
+          修复建议清单
+        </h2>
         
         <div className="space-y-4">
           {report.fix_list.map((item: FixItem, index) => (
@@ -367,7 +391,10 @@ export default function DiagnosticReportPage() {
 
       {/* 成品文件 */}
       <Card>
-        <h2 className="text-lg font-semibold mb-4">成品文件</h2>
+        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <FileCode2 className="h-5 w-5 text-accent" />
+          成品文件
+        </h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {report.artifacts.map((artifact: FixArtifact, index) => (
@@ -408,6 +435,7 @@ export default function DiagnosticReportPage() {
         />
       )}
     </div>
+    </T>
   );
 }
 
@@ -416,16 +444,23 @@ function SummaryBlock({
   label,
   text,
   tone,
+  icon,
 }: {
   label: string;
   text: string;
   tone: "accent" | "warn" | "positive";
+  icon?: React.ReactNode;
 }) {
   return (
-    <div className="rounded-ds border border-edge p-4">
-      <Badge tone={tone}>{label}</Badge>
-      <p className="mt-2 text-sm text-ink">{text}</p>
+    <T>
+    <div className="relative rounded-ds border border-edge p-4 overflow-hidden">
+      <div className="flex items-center gap-2 mb-2">
+        {icon && <span className="text-accent">{icon}</span>}
+        <Badge tone={tone}>{label}</Badge>
+      </div>
+      <p className="text-sm text-ink">{text}</p>
     </div>
+    </T>
   );
 }
 
@@ -451,6 +486,7 @@ function EvidenceDrawer({
   });
 
   return (
+    <T>
     <div className="fixed inset-0 z-50 flex justify-end">
       <div className="absolute inset-0 bg-black/30" onClick={onClose} />
       <div className="relative w-full max-w-2xl bg-surface h-full shadow-xl flex flex-col">
@@ -521,11 +557,112 @@ function EvidenceDrawer({
         </div>
       </div>
     </div>
+    </T>
   );
 }
 
 // 辅助函数
 function getColor(index: number): string {
-  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8", "#82ca9d"];
+  const COLORS = ["#6366f1", "#06b6d4", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444"];
   return COLORS[index % COLORS.length];
+}
+
+function ScoreRing({ score }: { score: number }) {
+  const radius = 28;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (score / 100) * circumference;
+  const color = score >= 70 ? "var(--ds-positive)" : score >= 40 ? "var(--ds-warn)" : "var(--ds-negative)";
+
+  return (
+    <T>
+    <div className="relative h-20 w-20 shrink-0">
+      <svg className="h-20 w-20 -rotate-90" viewBox="0 0 64 64">
+        <circle cx="32" cy="32" r={radius} fill="none" stroke="var(--ds-edge)" strokeWidth="4" />
+        <circle
+          cx="32" cy="32" r={radius} fill="none" stroke={color} strokeWidth="4"
+          strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={offset}
+          className="transition-all duration-500"
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-lg font-bold text-ink tabular-nums">{score.toFixed(0)}</span>
+        <span className="text-[10px] text-ink-subtle">/100</span>
+      </div>
+    </div>
+    </T>
+  );
+}
+
+
+/**
+ * Δ-05 / Δ-02 / Δ-06：四数同屏互不折算、跨语言并列观察说明、独立参考区。
+ * 参考区与业务指标使用不同表头、不同数组，禁止同列求平均；1.0 旧报告
+ * 以「旧口径」标注三数，不用 1.1 算法重算。flag off 时 report.counts 缺失，
+ * 本组件整体不渲染。
+ */
+function DeltaPanels({ report }: { report: DiagnosticReport }) {
+  const c = report.counts!;
+  return (
+    <T>
+    <div className="space-y-4">
+      <Card>
+        <h2 className="text-lg font-semibold mb-1 flex items-center gap-2">
+          <Network className="h-5 w-5 text-accent" />运行四数
+        </h2>
+        <p className="text-xs text-ink-subtle mb-4">
+          四数互不折算；suspect 单独计数，不并入 usable 或 failed。每个数字都标注 source_type 与 methodology_version。
+        </p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {([
+            ["planned", "计划", c.planned],
+            ["usable", "有效", c.usable],
+            ["failed", "失败", c.failed],
+            ["suspect", "可疑批次", c.suspect],
+          ] as [string, string, number][]).map(([key, label, value]) => (
+            <div key={key} className="rounded-ds border border-edge p-3">
+              <p className="text-xs text-ink-muted">{label}</p>
+              <p className="mt-1 text-2xl font-semibold text-ink tabular-nums">{value}</p>
+              <p className="mt-0.5 text-[10px] text-ink-subtle" data-field={key}>
+                {report.methodology_version} · n_valid {c.usable}
+              </p>
+            </div>
+          ))}
+        </div>
+        {report.legacy_counts && (
+          <Callout tone="info" className="mt-3">旧口径（1.0）：三数，缺 suspect 按 0 展示，未用 1.1 算法重算。</Callout>
+        )}
+        {report.language_notice && (
+          <p className="mt-3 text-xs text-ink-muted flex items-start gap-2">
+            <Globe className="h-3.5 w-3.5 mt-0.5 shrink-0" />{report.language_notice}
+          </p>
+        )}
+      </Card>
+
+      {report.reference_only && report.reference_only.length > 0 && (
+        <Card>
+          <h2 className="text-lg font-semibold mb-1 flex items-center gap-2">
+            <FileCode2 className="h-5 w-5 text-accent" />独立参考区
+          </h2>
+          <p className="text-xs text-ink-subtle mb-3">
+            用户自述，未经核验；传统 SEO 指标，不代表 AI 答案可见性。此区不进图表、不进 API 聚合、不参与排序或均值。
+          </p>
+          <Table
+            columns={[
+              { key: "metric", label: "指标" },
+              { key: "value", label: "数值" },
+              { key: "source_type", label: "来源类型" },
+              { key: "disclaimer", label: "说明" },
+            ]}
+            rows={report.reference_only.map((m) => ({
+              metric: m.metric_type,
+              value: String(m.value),
+              source_type: m.source_type,
+              disclaimer: m.disclaimer,
+            }))}
+          />
+        </Card>
+      )}
+    </div>
+    </T>
+  );
 }

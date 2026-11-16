@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    name: Go 测试与构建
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.21"
+          cache: true
+      - name: 全量 Go 测试（含增量 WBS §8 十条验收 + TC-16-01~19）
+        run: go test ./...
+      - name: Δ-01~Δ-07 §6 静态断言（禁词 / 四数 / host / 工具包装 / 三级标记 / 结果页快照）
+        run: go test ./internal/delta/... -run 'TestTC16' -v
+      - name: 全站禁词扫描（沿用 A-WP-2 §6）
+        run: go test ./internal/aeo/... -run 'TestAcceptance09_NeutralityAndBannedWords|TestEvaluateChecklistAllGreen' -v
+      - name: 后端构建
+        run: go build ./...
+
+  frontend:
+    name: 前端类型检查与构建
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+
+  e2e:
+    name: Playwright 回归基线
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.21"
+          cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+      - name: 安装 Chromium
+        run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - name: L0→L3 关键路径回归
+        run: npm run test:e2e
+        working-directory: frontend
+        env:
+          CI: "true"

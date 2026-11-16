@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/geolens/geolens/domain"
+	"github.com/geolens/geolens/internal/delta"
 	"github.com/geolens/geolens/internal/siteaudit"
 	"github.com/gin-gonic/gin"
 )
@@ -28,6 +29,32 @@ func (s *Server) getDiagnosticReport(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
+	}
+
+	// Δ 批次：flag on 时给新生成报告追加四数 / 跨语言说明 / 独立参考区，
+	// 并升 methodology_version 到 1.1。flag off 时 report 保持 v1.0 形状，
+	// 前端 DeltaPanels 因 counts 缺失而整体隐藏。
+	rt := s.deltaRuntime()
+	if rt.Enabled() {
+		counts := delta.FourCounts(report.Evidence)
+		report.Counts = &counts
+		report.MethodologyVersion = domain.MethodologyVersionDelta
+		report.LanguageNotice = domain.LanguageNotice
+		report.ReferenceOnly = rt.UserMetrics.ReferenceOnly()
+		report.MethodologyNotes = append(report.MethodologyNotes, domain.Contract9Note)
+		// Δ-03：把第 9 项分行结论下发给站点检查结果页共享结构。
+		verdict := delta.JudgeCrawlerVisit(delta.CrawlerSignals{
+			PlatformHint: "Couldn't fetch", PlatformHintIsError: true,
+		})
+		if auditPtr != nil {
+			auditPtr.CrawlerVisit = &domain.CrawlerVisitRow{
+				Verdict:          string(verdict.Verdict),
+				PlatformHint:     verdict.PlatformHint,
+				ObservedEvidence: verdict.ObservedEvidence,
+				EvidenceSource:   string(verdict.EvidenceSource),
+				FixAdvice:        delta.FixAdviceForCrawler(verdict),
+			}
+		}
 	}
 
 	c.JSON(http.StatusOK, report)
