@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { Card, Badge, Button, cn } from "../ds";
 import { track } from "../lib/tracking";
-import { NEUTRALITY } from "../lib/neutrality";
+import { NEUTRALITY, COMPETITOR_NEUTRALITY } from "../lib/neutrality";
 
 const FAQ = [
   {
@@ -111,6 +111,7 @@ export default function LandingPage() {
               <span className="text-ink">第三方转述</span>
               <Link to="/privacy" className="text-accent hover:underline">口径说明</Link>
             </div>
+            <p className="mt-2 border-t border-edge pt-2"><span className="font-medium text-ink">观测与行动中立：</span>{COMPETITOR_NEUTRALITY}</p>
           </div>
         </div>
       </section>

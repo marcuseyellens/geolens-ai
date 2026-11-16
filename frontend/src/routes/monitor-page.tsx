@@ -1,11 +1,12 @@
 import { T } from "../i18n";
 import { useEffect, useState } from "react";
-import { Activity, RefreshCw, AlertTriangle, ListChecks, Play, CheckCircle2, XCircle } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Activity, RefreshCw, AlertTriangle, ListChecks, Play, CheckCircle2, XCircle, Target, ArrowRight } from "lucide-react";
 import {
   Page, PageHeader, Card, StatCard, Callout, Badge, Spinner, Button, cn,
 } from "../ds";
 import { api } from "../api";
-import type { MonitorResponse, ReleaseResponse, ChainReport } from "../types";
+import type { MonitorResponse, ReleaseResponse, ChainReport, ActionBoardItem } from "../types";
 
 /** WP-8：五块看板、阈值告警、发布检查清单与 L0→L3 全链路回归。 */
 export default function MonitorPage() {
@@ -70,6 +71,9 @@ export default function MonitorPage() {
       ) : (
         <div className="space-y-6">
           {error && <Callout tone="warn" title="刷新失败，显示上次数据">{error}</Callout>}
+
+          {/* 第三批次 EC-06：竞品占位信号接入 Action Board，不触发品牌表现告警。 */}
+          <ActionBoardCard />
 
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             {(monitor?.boards || []).map((b) => (
@@ -185,6 +189,50 @@ export default function MonitorPage() {
         </div>
       )}
     </Page>
+    </T>
+  );
+}
+
+
+/** EC-06：M-8「今天值得做的 3 件事」只读接入；flag off 时整块隐藏。 */
+function ActionBoardCard() {
+  const [items, setItems] = useState<ActionBoardItem[]>([]);
+  const [on, setOn] = useState(true);
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([api.getActionBoard("demo_project"), api.getCompetitorStatus()])
+      .then(([board, status]) => {
+        if (cancelled) return;
+        setOn(status.on);
+        setItems(board.items);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+  if (!on) return null;
+  return (
+    <T>
+    <Card>
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h2 className="flex items-center gap-2 text-base font-semibold text-ink">
+          <Target className="h-5 w-5 text-accent" />今天值得做的 3 件事
+        </h2>
+        <Link to="/app/competitor" className="inline-flex items-center gap-1 text-xs text-accent hover:underline">
+          竞品观察 <ArrowRight className="h-3 w-3" />
+        </Link>
+      </div>
+      {items.length === 0 ? (
+        <p className="mt-3 text-sm text-ink-muted">目前没有待处理的竞品占位信号。</p>
+      ) : (
+        <ul className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2">
+          {items.map((item, i) => (
+            <li key={item.signal_id} className="rounded-ds border border-edge p-3 text-sm text-ink">
+              {i + 1}. {item.question_id} · {item.competitor_brand_id}
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
     </T>
   );
 }

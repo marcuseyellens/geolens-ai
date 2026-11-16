@@ -140,6 +140,9 @@ func (s *Server) RegisterRoutes(r *gin.Engine) {
 
 	// 规格书 Δ-01~Δ-07 / §3.1 端点（受 feature flag 总闸控制）。
 	s.registerDeltaRoutes(protected, r)
+
+	// 第三批次 CF-01~CF-08 / §3.1 端点（独立 flag，与 Δ 批次正交）。
+	s.registerCompetitorRoutes(protected, admin, r)
 }
 
 // ---- Brand handlers ----

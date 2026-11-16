@@ -15,6 +15,7 @@ import (
 	"github.com/geolens/geolens/internal/auth"
 	"github.com/geolens/geolens/internal/billing"
 	"github.com/geolens/geolens/internal/collector"
+	"github.com/geolens/geolens/internal/competitor"
 	"github.com/geolens/geolens/internal/delta"
 	"github.com/geolens/geolens/internal/governance"
 	"github.com/geolens/geolens/internal/growth"
@@ -131,6 +132,14 @@ func main() {
 	_ = deltaRuntime.Persist()
 	fmt.Printf("Delta feature %s: on=%v (GEOLENS_FLAG_AEO_DELTA_20261116=off 可秒级回滚)\n",
 		domain.DeltaFeatureFlag, deltaRuntime.Enabled())
+
+	// 第三批次 CF-01~CF-08 运行时：独立 flag、独立持久化文件，
+	// 与 Δ 批次正交，关闭后行为回到批次前状态。
+	competitorRuntime := competitor.NewRuntime(filepath.Join(filepath.Dir(dbPath), "competitor.json"))
+	handlers.SetCompetitorRuntime(competitorRuntime)
+	_ = competitorRuntime.Persist()
+	fmt.Printf("Competitor feature %s: on=%v (GEOLENS_FLAG_AEO_COMPETITOR_20261116=off 可秒级回滚)\n",
+		domain.CompetitorFeatureFlag, competitorRuntime.Enabled())
 
 	fmt.Printf("MCP read-only agent token: %s\n", agentToken.Token)
 	fmt.Printf("Demo login: %s / %s (admin)\n", demoEmail, demoPassword)

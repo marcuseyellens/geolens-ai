@@ -38,6 +38,7 @@ GeoLens AI 是一个 AEO / GEO（Answer / Generative Engine Optimization）可�
 - **登录与鉴权**：bcrypt 密码哈希 + 随机会话；公开 / 需登录 / 管理员三组路由，`account_id` 只从会话取。
 - **订阅开通**：套餐 CTA 跳 `/subscribe` 三步开通；`pricing` 与 `billing` 共用运行时套餐目录。
 - **海外收款**：Airwallex（空中云汇）与 PayPal 托管收银台，支持银行卡、Apple Pay、Google Pay、PayPal 余额；回调强制验签，订单幂等激活。凭证缺失时自动降级为演示网关。详见 [`docs/payments.md`](docs/payments.md)。
+- **竞品功能采集批次**：独立 flag `aeo_competitor_20261116`、口径版本 `1.2`，含多轮采样与分母正交、CE-1 采集通道、爬虫访问 IP 核验、逐页真实引用路径、CE-2 提问定位、竞品占位信号与只读证据导出。1.0.0 / 1.1 / 1.2 三口径并存渲染，历史报告不重算。详见 [`docs/competitor-features-20261116.md`](docs/competitor-features-20261116.md)。
 - **MCP 只读接入**：独立 Agent token 与 `tools/list` 固定包装，裁切时明确提示「能力集不完整」。
 
 ## 技术栈
@@ -134,6 +135,12 @@ export PERPLEXITY_API_KEY=pplx-...
 | POST | `/api/v1/billing/orders/:id/return` | 托管收银台回跳，完成扣款并开通 |
 | POST | `/api/v1/billing/webhook/:provider` | **匿名但强制验签**的供应商回调 |
 | GET | `/api/v1/delta/status` | flag 状态、口径版本、阈值配置、迁移结果 |
+| GET | `/api/v1/competitor/status` | 第三批次 flag、1.2 口径、迁移描述，始终可访问 |
+| GET | `/api/v1/competitor/reports` | 1.0 / 1.1 / 1.2 三口径渲染数据 |
+| GET | `/api/v1/competitor/evidence/:id` | 只读原始回答与完整 citations（调用零写） |
+| GET | `/api/v1/competitor/evidence/:id/export` | CSV / JSON 导出，含原文与采样序号 |
+| GET | `/api/v1/competitor/projects/:id/action-board` | M-8 Action Board，按内部排序返回 3 条 |
+| GET | `/api/v1/competitor/ci-assertions` | 既有 §6 断言 + 第三批次 11 项追加断言 |
 | GET | `/api/v1/delta/ci-assertions` | §6 全部静态断言结果 |
 
 ### Δ 批次契约端点（§3.1，flag on 时可用）
@@ -162,7 +169,7 @@ cd frontend && npm run build
 BASE_URL=http://127.0.0.1:8080 PW_CHANNEL=chrome npx playwright test
 ```
 
-CI 在每次 push / PR 运行：Go 测试、Δ 静态断言、禁词扫描、前端构建、Playwright 27 个用例。
+CI 在每次 push / PR 运行：Go 测试、Δ 静态断言、竞品批次 TC-C-01~14、禁词扫描、前端构建、Playwright 30 个用例。
 
 ## 海外收款配置
 
@@ -186,6 +193,8 @@ CI 在每次 push / PR 运行：Go 测试、Δ 静态断言、禁词扫描、前
 | `GEOLENS_DEMO_EMAIL` / `GEOLENS_DEMO_PASSWORD` | `demo@geolens.ai` / `demo1234` | 首次启动写入的演示管理员 |
 | `GEOLENS_ADMIN_TOKEN` | 启动时生成 | 管理端点的 `X-Admin-Token` |
 | `GEOLENS_FLAG_AEO_DELTA_20261116` | `on` | 设为 `off` 回滚到 v1.0 口径 |
+| `GEOLENS_FLAG_AEO_COMPETITOR_20261116` | `on` | 第三批次独立开关；`off` 时新端点 404、`/v1/runs` 与 `/v1/reports` 不返回新字段，不影响增量批次 |
+| `GEOLENS_COMPETITOR_DB` 旁生 | `competitor.json` | 与 `GEOLENS_DB` 同目录自动落盘，保存第三批次集合 |
 | `AIRWALLEX_CLIENT_ID` / `AIRWALLEX_API_KEY` | 未设置 | 空中云汇 API 凭证；两者齐全才启用 |
 | `AIRWALLEX_API_BASE` | `https://api-demo.airwallex.com` | 生产用 `https://api.airwallex.com` |
 | `AIRWALLEX_WEBHOOK_SECRET` | 未设置 | Airwallex 回调 HMAC 密钥（缺失则拒绝回调） |
@@ -200,5 +209,6 @@ CI 在每次 push / PR 运行：Go 测试、Δ 静态断言、禁词扫描、前
 - [`docs/execution-spec-20261116.md`](docs/execution-spec-20261116.md)：Δ 批次落地说明与验收清单
 - [`docs/increment-template.md`](docs/increment-template.md)：三级证据标记模板与评审检查表
 - [`docs/payments.md`](docs/payments.md)：Airwallex / PayPal 接入、验签与上线核对
+- [`docs/competitor-features-20261116.md`](docs/competitor-features-20261116.md)：竞品功能批次任务卡落地、三级标记、排除项清单与 DoD-C
 - [`docs/mcp.md`](docs/mcp.md)：MCP 只读接入
 - [`banned-phrases.txt`](banned-phrases.txt)：全站禁词表（CI 扫描）

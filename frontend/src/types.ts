@@ -393,6 +393,118 @@ export interface UserProvidedMetric {
   created_at: string;
 }
 
+// ---- 第三批次：竞品功能采集（CF-01~CF-08，独立 flag aeo_competitor_20261116）----
+export type CaptureChannel = "real_ui" | "api_sourced" | "hybrid" | "unknown";
+export type LocationScope = "country" | "region" | "state" | "city" | "none";
+export type GapType =
+  | "competitor_present_brand_absent"
+  | "competitor_cited_brand_not"
+  | "competitor_recommended_brand_not";
+export type BotVerification =
+  | "ip_verified" | "reverse_dns_verified" | "ua_only"
+  | "suspected_spoof" | "unverified";
+
+export interface CompetitorStatus {
+  flag: string;
+  on: boolean;
+  delta_flag: string;
+  delta_on: boolean;
+  methodology_version: string;
+  legacy_versions: string[];
+  schema_version: string;
+  neutrality_notice: string;
+  contracts: string[];
+  migration: Record<string, unknown>;
+}
+
+export interface ReportTemplate {
+  report_id: string;
+  methodology_version: string;
+  counts: Counts;
+  count_notice?: string;
+  neutrality_notice?: string;
+  capture_channel?: CaptureChannel;
+  capture_channel_notice?: string;
+  source_type: string;
+}
+
+export interface EvidenceRecord {
+  run_id: string;
+  methodology_version: string;
+  raw_answer_text: string;
+  sample_index: number;
+  capture_channel: CaptureChannel;
+  citations: { url: string; domain: string; page_path?: string }[];
+  source_type: string;
+  collected_at: string;
+}
+
+export interface ActionBoardItem {
+  signal_id: string;
+  question_id: string;
+  gap_type: GapType;
+  competitor_brand_id: string;
+  run_id: string;
+  detected_at: string;
+}
+
+export interface CompetitorGap {
+  signal_id: string;
+  project_id: string;
+  question_id: string;
+  run_id: string;
+  competitor_brand_id: string;
+  gap_type: GapType;
+  priority_score: number;
+  status: string;
+  detected_at: string;
+}
+
+export interface CrawlerVisit {
+  visit_id: string;
+  project_id: string;
+  page_url: string;
+  crawler_operator: string;
+  ua_string: string;
+  source_ip: string;
+  bot_verification: BotVerification;
+  suspected_spoof: boolean;
+  observed_at: string;
+  evidence_source: string;
+}
+
+export interface CrawlPath {
+  path_id: string;
+  project_id: string;
+  page_url: string;
+  citation_id: string;
+  run_id: string;
+  crawled_at: string;
+  cited_at: string;
+  visit_id?: string;
+}
+
+export interface PromptTargetingView {
+  target_id?: string;
+  question_set_id: string;
+  location_scope: LocationScope;
+  location_value: string;
+  persona: string;
+  timezone: string;
+  config_version: string;
+  query_locale: string;
+}
+
+export interface CompetitorRunView {
+  run_id: string;
+  question_set_id: string;
+  project_id: string;
+  sample_rounds: number;
+  sample_policy_version: string;
+  capture_channel_declared: boolean;
+  methodology_version: string;
+}
+
 export interface ModelInfo {
   id: AIModelID;
   name: string;

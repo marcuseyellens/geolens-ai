@@ -41,6 +41,7 @@ import LegalPage from "./routes/legal";
 import ComparePage from "./routes/compare";
 import LoginPage from "./routes/login";
 import SubscribePage from "./routes/subscribe";
+import CompetitorPage from "./routes/competitor-page";
 
 const navItems = [
   { path: "/app", label: "概览", icon: LayoutDashboard },
@@ -50,6 +51,7 @@ const navItems = [
   { path: "/app/acceptance", label: "发布验收", icon: ShieldCheck },
   { path: "/app/billing", label: "套餐账单", icon: CreditCard },
   { path: "/app/monitor", label: "监控发布", icon: Activity },
+  { path: "/app/competitor", label: "竞品观察", icon: Radar },
   { path: "/app/operations", label: "运行治理", icon: Cpu },
   { path: "/app/mcp", label: "MCP 接入", icon: Plug },
   { path: "/app/settings", label: "设置", icon: Settings },
@@ -161,6 +163,7 @@ function AppShell() {
           <Route path="acceptance" element={<AcceptancePage />} />
           <Route path="billing" element={<BillingPage />} />
           <Route path="monitor" element={<MonitorPage />} />
+          <Route path="competitor" element={<CompetitorPage />} />
           <Route path="operations" element={<OperationsPage />} />
           <Route path="mcp" element={<MCPDocsPage />} />
           <Route path="settings" element={<SettingsPage />} />

@@ -136,3 +136,58 @@ test("支付端点：供应商目录、演示降级与回调验签", async ({ re
   });
   expect([401, 404]).toContain(unsigned.status());
 });
+
+// 第三批次 CF-01~CF-08：flag 正交、三口径渲染、只读证据与 CI 断言。
+test("竞品批次：独立 flag、1.0/1.1/1.2 三口径与只读证据", async ({ request }) => {
+  const status = await request.get("/api/v1/competitor/status", { headers: auth() });
+  expect(status.ok()).toBeTruthy();
+  const s = await status.json();
+  expect(s.flag).toBe("aeo_competitor_20261116");
+  expect(s.on).toBe(true);
+  expect(s.delta_flag).toBe("aeo_delta_20261116");
+  expect(s.delta_on).toBe(true);
+  expect(s.methodology_version).toBe("1.2");
+  expect(s.neutrality_notice).toContain("本报告的观测数据独立采集");
+
+  const reportsResp = await request.get("/api/v1/competitor/reports", { headers: auth() });
+  expect(reportsResp.ok()).toBeTruthy();
+  const { reports } = await reportsResp.json();
+  const versions: string[] = reports.map((r: { methodology_version: string }) => r.methodology_version);
+  expect(versions).toContain("1.0.0");
+  expect(versions).toContain("1.1");
+  expect(versions).toContain("1.2");
+  const current = reports.find((r: { methodology_version: string }) => r.methodology_version === "1.2");
+  expect(current.neutrality_notice).toContain("不构成因果结论");
+  const legacy = reports.find((r: { methodology_version: string }) => r.methodology_version === "1.0.0");
+  expect(legacy.neutrality_notice).toBeFalsy();
+  expect(legacy.count_notice).toContain("旧口径");
+
+  const run = await request.get("/api/v1/competitor/runs/demo_run_1", { headers: auth() });
+  expect(run.ok()).toBeTruthy();
+  const runBody = await run.json();
+  expect(runBody.sample_rounds).toBeGreaterThan(1);
+  expect(runBody.capture_channel_declared).toBe(true);
+
+  const evidence = await request.get("/api/v1/competitor/evidence/demo_run_1", { headers: auth() });
+  expect(evidence.ok()).toBeTruthy();
+  const ev = await evidence.json();
+  expect(ev.read_only).toBe(true);
+  expect(ev.methodology_version).toBe("1.2");
+  expect(ev.evidence.length).toBeGreaterThan(0);
+  expect(ev.evidence[0].raw_answer_text).toBeTruthy();
+  expect(ev.evidence[0].capture_channel).toBeTruthy();
+  expect(ev.citation_count).toBeGreaterThan(0);
+  expect(JSON.stringify(ev)).not.toContain("overall_score");
+  expect(JSON.stringify(ev)).not.toContain("visibility_score");
+
+  const ci = await request.get("/api/v1/competitor/ci-assertions", { headers: auth() });
+  expect(ci.ok()).toBeTruthy();
+  const ciBody = await ci.json();
+  expect(ciBody.all_pass).toBe(true);
+  expect(ciBody.checks.length).toBeGreaterThanOrEqual(20);
+});
+
+test("竞品批次：未登录访问新增端点被拒绝", async ({ request }) => {
+  const resp = await request.get("/api/v1/competitor/runs/demo_run_1");
+  expect(resp.status()).toBe(401);
+});

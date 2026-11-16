@@ -37,3 +37,15 @@ AI 平台因此改变收录
 domain_authority 权重
 dr 权重
 da 权重
+
+# 竞品功能采集批次（CF-01~CF-08）追加项；原有条目全部保留
+visibility_score
+ai_attention_score
+composite_score
+ai_visibility_index
+real_ui 比 api_sourced 更准
+因此平台收录不同
+采集通道决定可见性
+综合可见度分
+综合 AI 分数
+综合指数

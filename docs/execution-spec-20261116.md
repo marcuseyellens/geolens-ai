@@ -65,7 +65,7 @@
 
 [事实] TC-16-01~19 全部为可执行 Go 单测（`internal/delta/tc16_test.go`），DoD 要求全绿；§3.1 端点另有 HTTP 集成测试（`api/handlers/delta_handler_test.go`）与 Playwright 契约用例（`frontend/e2e/specs/platform-api.spec.ts`）。
 
-[观察] 本地验证记录：`go test ./...` 13 个包全绿；`npm run build` 通过；Playwright 27/27 通过；英文模式 17 个主要页面零中文残留；8 种界面语言的首页标题逐语言本地化；§6 端点返回 `all_pass=true`。
+[观察] 本地验证记录：`go test ./...` 13 个包全绿；`npm run build` 通过；Playwright 30/30 通过；英文模式 18 个主要页面零中文残留（含 /app/competitor）；8 种界面语言的首页标题逐语言本地化；§6 端点返回 `all_pass=true`。
 
 ## 六、合规红线
 

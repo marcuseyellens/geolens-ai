@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -97,6 +98,23 @@ func (s *Server) deltaGetRun(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "run not found"})
 		return
 	}
+	// 第三批次字段追加：仅在 aeo_competitor_20261116 = on 时返回，
+	// off 时响应与本批次前逐字节一致（§3.2 / §8）。
+	if crt := s.competitorRuntime(); crt.Enabled() {
+		out := gin.H{}
+		if b, err := json.Marshal(run); err == nil {
+			_ = json.Unmarshal(b, &out)
+		}
+		sampleRounds, policy, declared := 1, domain.SamplePolicySingleV1, false
+		if cr, ok := crt.Run(c.Param("run_id")); ok {
+			sampleRounds, policy, declared = cr.SampleRounds, cr.SamplePolicyVersion, cr.CaptureChannelDeclared
+		}
+		out["sample_rounds"] = sampleRounds
+		out["sample_policy_version"] = policy
+		out["capture_channel_declared"] = declared
+		c.JSON(http.StatusOK, out)
+		return
+	}
 	c.JSON(http.StatusOK, run)
 }
 
@@ -133,6 +151,14 @@ func (s *Server) deltaGetReport(c *gin.Context) {
 	}
 	if rec.LegacyCounts {
 		resp["counts_notice"] = "旧口径（1.0）：三数，缺 suspect 按 0 展示，禁止用 1.1 算法重算。"
+	}
+	// EC-05：固定中立性声明逐字注入报告 API；历史报告仍保留生成时版本，
+	// 渲染层按版本分支决定是否展示，不把旧口径伪装成 1.2。
+	if s.competitorRuntime().Enabled() {
+		resp["neutrality_notice"] = domain.NeutralityNotice
+		resp["competitor_contracts"] = []string{
+			domain.ContractC1, domain.ContractC2, domain.ContractC3, domain.ContractC4,
+		}
 	}
 	c.JSON(http.StatusOK, resp)
 }

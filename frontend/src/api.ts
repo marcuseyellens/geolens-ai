@@ -15,6 +15,8 @@ import type {
   MarginRow, Entitlement, BillingPanel, QuotaUsage, QuotaDecision, Order,
   MonitorResponse, ReleaseResponse, ChainReport, MCPInfo, PlanID, PaymentKind,
   AuthUser, AuthResponse, PaymentProvider, CheckoutResponse,
+  CompetitorStatus, ReportTemplate, EvidenceRecord, ActionBoardItem, CompetitorGap,
+  CrawlerVisit, CrawlPath, PromptTargetingView, CompetitorRunView,
 } from "./types";
 import { readToken, writeToken, notifyUnauthorized } from "./auth/session";
 
@@ -146,6 +148,27 @@ export const api = {
   getCollectorMargins: () => req<{ margins: MarginRow[] }>("/collector/margins"),
 
   // ---- WP-7 套餐计费 ----
+  // ---- 第三批次：竞品观察 / 三口径 / 只读证据 ----
+  getCompetitorStatus: () => req<CompetitorStatus>("/competitor/status"),
+  getCompetitorReports: () => req<{ reports: ReportTemplate[] }>("/competitor/reports"),
+  getCompetitorReport: (id: string) => req<ReportTemplate>(`/competitor/reports/${id}`),
+  getCompetitorRun: (id: string) => req<CompetitorRunView>(`/competitor/runs/${id}`),
+  getCompetitorEvidence: (id: string) =>
+    req<{ run_id: string; methodology_version: string; evidence: EvidenceRecord[]; citation_count: number; read_only: boolean }>(
+      `/competitor/evidence/${id}`),
+  exportEvidenceURL: (id: string, format: "csv" | "json") =>
+    `/api/v1/competitor/evidence/${id}/export?format=${format}`,
+  getCompetitorGaps: (projectId: string) =>
+    req<{ gaps: CompetitorGap[] }>(`/competitor/projects/${projectId}/competitor-gaps`),
+  getActionBoard: (projectId: string) =>
+    req<{ items: ActionBoardItem[] }>(`/competitor/projects/${projectId}/action-board`),
+  getCrawlerVisits: (auditId: string) =>
+    req<{ visits: CrawlerVisit[]; audit_check: { audit_id: string; bot_filter_applied: boolean; verified_visit_count: number } }>(
+      `/competitor/audits/${auditId}/crawler-visits`),
+  getCrawlPaths: (auditId: string) => req<{ paths: CrawlPath[] }>(`/competitor/audits/${auditId}/crawl-citation-paths`),
+  getTargeting: (qsId: string) => req<PromptTargetingView>(`/competitor/question-sets/${qsId}/targeting`),
+  getCompetitorCI: () =>
+    req<{ checks: { name: string; pass: boolean; detail: string }[]; all_pass: boolean }>("/competitor/ci-assertions"),
   getPlans: () => req<{ plans: Entitlement[]; note: string }>("/plans"),
   // 账户身份由服务端从会话解析，前端不再传 account_id。
   getBillingPanel: () => req<BillingPanel>("/billing/panel"),

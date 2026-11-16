@@ -15,7 +15,7 @@ import {
 } from "recharts";
 import { api } from "../api";
 import type { 
-  DiagnosticReport, FixItem, FixArtifact, GroupScore, RunAnswer
+  DiagnosticReport, FixItem, FixArtifact, GroupScore, RunAnswer, CompetitorStatus
 } from "../types";
 
 export default function DiagnosticReportPage() {
@@ -115,6 +115,7 @@ export default function DiagnosticReportPage() {
 
       {/* Δ 批次：四数隔离、跨语言并列观察、独立参考区（flag off 时整体隐藏） */}
       {report.counts && <DeltaPanels report={report} />}
+      <VersionNotice version={report.methodology_version} />
 
       {/* 核心指标概览 */}
       <div className="flex items-center justify-between">
@@ -663,6 +664,44 @@ function DeltaPanels({ report }: { report: DiagnosticReport }) {
         </Card>
       )}
     </div>
+    </T>
+  );
+}
+
+
+/** EC-05：固定中立性声明在报告页逐字可见；三口径按版本分支，不把旧口径伪装成 1.2。 */
+function VersionNotice({ version }: { version: string }) {
+  const [status, setStatus] = useState<CompetitorStatus | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    api.getCompetitorStatus()
+      .then((s) => { if (!cancelled) setStatus(s); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+  if (!status || !status.on) return null;
+  const current = version === status.methodology_version;
+  return (
+    <T>
+    <Card>
+      <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+        <ClipboardList className="h-5 w-5 text-accent" />
+        口径版本与中立性说明
+      </h2>
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <span className="text-ink-muted">本报告口径</span>
+        <Badge tone={current ? "accent" : "warn"}>{version}</Badge>
+        <span className="text-ink-muted">当前批次口径</span>
+        <Badge>{status.methodology_version}</Badge>
+        <span className="text-ink-muted">历史口径 {status.legacy_versions.join(" / ")} 保留生成时版本</span>
+      </div>
+      {!current && (
+        <p className="mt-3 text-xs text-ink-muted">旧口径：本报告按生成时版本渲染，未用新口径重算。</p>
+      )}
+      <p className="mt-3 border-t border-edge pt-3 text-sm leading-relaxed text-ink">
+        {status.neutrality_notice}
+      </p>
+    </Card>
     </T>
   );
 }

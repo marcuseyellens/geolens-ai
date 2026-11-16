@@ -117,3 +117,16 @@ test("语言选择器提供 8 种语言并真正切换版面文案", async ({ pa
   await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
   await expect(page.getByRole("heading", { name: "先用免费的，再决定要不要付费" })).toBeVisible();
 });
+
+test("竞品观察页展示三口径、中立性声明与原始证据", async ({ page }) => {
+  await page.goto("/app/competitor");
+  await expect(page.getByRole("heading", { name: "竞品观察" })).toBeVisible();
+  await expect(page.getByText(/本报告的观测数据独立采集/).first()).toBeVisible();
+  await expect(page.getByText(/口径 1\.2/)).toBeVisible();
+  await expect(page.getByText(/旧口径/).first()).toBeVisible();
+  await expect(page.getByText(/今天值得做的 3 件事/).first()).toBeVisible();
+
+  await page.getByRole("button", { name: /查看原文/ }).click();
+  await expect(page.getByText(/示例答案/).first()).toBeVisible();
+  await expect(page.getByText(/个引用/).first()).toBeVisible();
+});

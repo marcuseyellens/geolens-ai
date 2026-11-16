@@ -22,6 +22,8 @@ jobs:
         run: go test ./internal/aeo/... -run 'TestAcceptance09_NeutralityAndBannedWords|TestEvaluateChecklistAllGreen' -v
       - name: 海外收款回归（供应商模拟、验签、降级、订单归属）
         run: go test ./internal/billing/... ./api/handlers/... -run 'TestProvider|TestAirwallex|TestPayPal|TestHosted|TestPayment|TestCheckout' -v
+      - name: 竞品批次回归（TC-C-01~14 / 五处输出面禁令 / 采样分母正交 / flag 正交）
+        run: go test ./internal/competitor/... -run 'TestTCC' -v
       - name: 后端构建
         run: go build ./...
 
