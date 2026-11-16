@@ -14,7 +14,7 @@ import type {
   GovernanceOverview, GraphOverview, HybridHit, CollectorOverview, BatchReport,
   MarginRow, Entitlement, BillingPanel, QuotaUsage, QuotaDecision, Order,
   MonitorResponse, ReleaseResponse, ChainReport, MCPInfo, PlanID, PaymentKind,
-  AuthUser, AuthResponse,
+  AuthUser, AuthResponse, PaymentProvider, CheckoutResponse,
 } from "./types";
 import { readToken, writeToken, notifyUnauthorized } from "./auth/session";
 
@@ -150,9 +150,14 @@ export const api = {
   // 账户身份由服务端从会话解析，前端不再传 account_id。
   getBillingPanel: () => req<BillingPanel>("/billing/panel"),
   getBillingQuota: () => req<{ usage: QuotaUsage; decision: QuotaDecision }>("/billing/quota"),
-  checkout: (plan: PlanID, kind: PaymentKind = "subscription") =>
-    req<{ order: Order; steps: string[] }>("/billing/checkout", {
-      method: "POST", body: JSON.stringify({ plan, kind }),
+  // ---- 海外收款（Airwallex / PayPal / 演示网关）----
+  getPaymentProviders: () => req<{ providers: PaymentProvider[]; note: string }>("/billing/providers"),
+  getOrder: (orderId: string) => req<{ order: Order }>(`/billing/orders/${orderId}`),
+  confirmHostedReturn: (orderId: string) =>
+    req<{ order: Order }>(`/billing/orders/${orderId}/return`, { method: "POST" }),
+  checkout: (plan: PlanID, kind: PaymentKind = "subscription", provider = "sandbox") =>
+    req<CheckoutResponse>("/billing/checkout", {
+      method: "POST", body: JSON.stringify({ plan, kind, provider }),
     }),
   payOrder: (orderId: string) =>
     req<{ order: Order }>("/billing/pay", { method: "POST", body: JSON.stringify({ order_id: orderId }) }),

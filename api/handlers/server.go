@@ -30,6 +30,8 @@ type Platform struct {
 	Monitor    *monitor.Engine
 	Auth       *auth.Engine
 	AdminToken string
+	// Payments 可选注入；为空时 NewServer 从环境变量装配（凭证缺失只有演示网关）。
+	Payments *billing.ProviderRegistry
 }
 
 // Server 持有所有 handler 依赖
@@ -46,11 +48,13 @@ type Server struct {
 	governance *governance.Engine
 	graph      *omnigraph.Store
 	collector  *collector.Framework
+	payments   *billing.ProviderRegistry
 }
 
 // NewServer 创建 API server。platform 为 nil 时保持旧行为（仅 WP-6 + 增量 WBS 端点）。
 func NewServer(detection *application.DetectionService, engine *aimodel.Engine, growthStore *growth.Store, platform ...*Platform) *Server {
-	s := &Server{detection: detection, engine: engine, growth: growthStore}
+	s := &Server{detection: detection, engine: engine, growth: growthStore,
+		payments: billing.NewProviderRegistry()}
 	if len(platform) > 0 && platform[0] != nil {
 		p := platform[0]
 		s.platform = p
@@ -62,6 +66,9 @@ func NewServer(detection *application.DetectionService, engine *aimodel.Engine, 
 		s.governance = p.Governance
 		s.graph = p.Graph
 		s.collector = p.Collector
+		if p.Payments != nil {
+			s.payments = p.Payments
+		}
 	}
 	return s
 }
@@ -72,6 +79,10 @@ func NewServer(detection *application.DetectionService, engine *aimodel.Engine, 
 // 有效会话；管理端点额外要求 admin 角色或 X-Admin-Token。account_id 一律取自
 // 会话，客户端传参不再被信任。/mcp 使用独立的只读 Agent token，不走用户会话。
 func (s *Server) RegisterRoutes(r *gin.Engine) {
+	// 直接构造 Server 的测试没有走 NewServer，这里补齐支付供应商注册表。
+	if s.payments == nil {
+		s.payments = billing.NewProviderRegistry()
+	}
 	api := r.Group("/api/v1")
 
 	// ---- 匿名可用：健康检查、登录注册、免费检查、分享、埋点、公开自检 ----

@@ -112,3 +112,27 @@ test("Δ 批次端点返回四数、分行字段与固定包装", async ({ reque
   const ci = await request.get("/api/v1/delta/ci-assertions", { headers: auth() });
   expect((await ci.json()).all_pass).toBe(true);
 });
+
+// 海外收款：无凭证时降级演示网关，匿名回调必须验签，旧流程保持兼容。
+test("支付端点：供应商目录、演示降级与回调验签", async ({ request }) => {
+  const res = await request.get("/api/v1/billing/providers", { headers: auth() });
+  expect(res.ok()).toBeTruthy();
+  const { providers } = await res.json();
+  expect(Array.isArray(providers)).toBeTruthy();
+  expect(providers.some((p: { id: string }) => p.id === "sandbox")).toBeTruthy();
+  expect(providers.find((p: { id: string }) => p.id === "sandbox").live).toBe(false);
+
+  const checkout = await request.post("/api/v1/billing/checkout", {
+    headers: auth(), data: { plan: "starter", kind: "subscription", provider: "sandbox" },
+  });
+  expect(checkout.ok()).toBeTruthy();
+  const body = await checkout.json();
+  expect(body.next).toBe("pay");
+  expect(body.checkout_url).toBeFalsy();
+  expect(body.order.status).toBe("pending");
+
+  const unsigned = await request.post("/api/v1/billing/webhook/paypal", {
+    data: { event_id: "fake", order_id: body.order.id, status: "succeeded" },
+  });
+  expect([401, 404]).toContain(unsigned.status());
+});

@@ -38,7 +38,7 @@ test.describe("匿名访问", () => {
     await page.goto("/pricing");
     await expect(page.getByRole("heading", { name: "先用免费的，再决定要不要付费" })).toBeVisible();
 
-    await page.getByRole("button", { name: "Switch to English" }).click();
+    await page.getByTestId("locale-select").selectOption("en");
     await expect(page.getByRole("heading", { name: "Start free, then decide whether to pay" })).toBeVisible();
     expect(await page.locator("html").getAttribute("lang")).toBe("en");
 
@@ -46,7 +46,7 @@ test.describe("匿名访问", () => {
     await page.reload();
     await expect(page.getByRole("heading", { name: "Start free, then decide whether to pay" })).toBeVisible();
 
-    await page.getByRole("button", { name: "Switch to Chinese" }).click();
+    await page.getByTestId("locale-select").selectOption("zh");
     await expect(page.getByRole("heading", { name: "先用免费的，再决定要不要付费" })).toBeVisible();
     expect(await page.locator("html").getAttribute("lang")).toBe("zh-CN");
   });
@@ -70,19 +70,19 @@ test("已登录控制台可用，退出登录后重新要求登录", async ({ pa
 
 test("订阅三步流程可完成开通", async ({ page }) => {
   await page.goto("/subscribe?plan=starter&kind=subscription");
-  await expect(page.getByRole("heading", { name: "选择套餐并完成开通" })).toBeVisible();
-  await page.getByRole("button", { name: /下一步：确认权益/ }).click();
-  await expect(page.getByRole("heading", { name: "第 2 步 · 确认权益" })).toBeVisible();
-  await page.getByRole("button", { name: /下一步：支付开通/ }).click();
-  await expect(page.getByRole("heading", { name: "第 3 步 · 支付与开通" })).toBeVisible();
-  await page.getByRole("button", { name: /确认开通/ }).click();
+  await expect(page.getByRole("heading", { name: "开通套餐，立刻开始检查" })).toBeVisible();
+  await page.getByRole("button", { name: /下一步：确认内容/ }).click();
+  await expect(page.getByRole("heading", { name: "第 2 步 · 确认内容" })).toBeVisible();
+  await page.getByRole("button", { name: /下一步：付款/ }).click();
+  await expect(page.getByRole("heading", { name: "第 3 步 · 付款" })).toBeVisible();
+  await page.getByRole("button", { name: "立即开通", exact: true }).click();
   await expect(page.getByRole("heading", { name: /已开通/ })).toBeVisible();
 });
 
 test("控制台侧栏可切换英文", async ({ page }) => {
   await page.goto("/app/monitor");
   await expect(page.getByRole("heading", { name: "监控与发布" })).toBeVisible();
-  await page.getByRole("button", { name: "Switch to English" }).click();
+  await page.getByTestId("locale-select").selectOption("en");
   await expect(page.getByRole("heading", { name: "Monitoring & release" })).toBeVisible();
 });
 
@@ -90,7 +90,7 @@ test("英文模式下主要页面不残留中文", async ({ page, context }) => 
   await context.addInitScript(() => {
     try { localStorage.setItem("geolens-locale", "en"); } catch { /* ignore */ }
   });
-  const paths = ["/", "/pricing", "/app", "/app/monitor", "/app/acceptance", "/app/operations", "/app/mcp", "/app/billing"];
+  const paths = ["/", "/pricing", "/app", "/app/monitor", "/app/acceptance", "/app/operations", "/app/mcp", "/app/billing", "/subscribe?plan=growth&kind=subscription", "/check"];
   for (const path of paths) {
     await page.goto(path);
     await page.waitForLoadState("networkidle");
@@ -98,4 +98,22 @@ test("英文模式下主要页面不残留中文", async ({ page, context }) => 
     const body = await page.locator("body").innerText();
     expect(body, `英文界面 ${path} 不应残留中文`).not.toMatch(/[\u4e00-\u9fff]/);
   }
+});
+
+test("语言选择器提供 8 种语言并真正切换版面文案", async ({ page }) => {
+  await page.goto("/pricing");
+  const select = page.getByTestId("locale-select").first();
+  await expect(select.locator("option")).toHaveCount(8);
+
+  await select.selectOption("ja");
+  await expect(page.locator("html")).toHaveAttribute("lang", "ja");
+  await expect(page.getByRole("heading", { name: "まず無料で試して、必要なら有料へ" })).toBeVisible();
+
+  await select.selectOption("es");
+  await expect(page.locator("html")).toHaveAttribute("lang", "es");
+  await expect(page.getByRole("heading", { name: "Empieza gratis y decide después si pagas" })).toBeVisible();
+
+  await select.selectOption("zh");
+  await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
+  await expect(page.getByRole("heading", { name: "先用免费的，再决定要不要付费" })).toBeVisible();
 });

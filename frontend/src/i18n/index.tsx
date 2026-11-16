@@ -2,16 +2,20 @@ import {
   cloneElement, createContext, isValidElement, useCallback, useContext,
   useEffect, useMemo, useState, type ReactElement, type ReactNode,
 } from "react";
+import { Languages } from "lucide-react";
 import { EN } from "./en";
+import { EXTRA, LOCALES, SECTION_COPY } from "./extra";
 
-export type Locale = "zh" | "en";
+export type Locale =
+  | "zh" | "en" | "zh-Hant" | "ja" | "ko" | "es" | "fr" | "de";
 
 const STORAGE_KEY = "geolens-locale";
 
-/** 中文原文即 key：zh 直接返回原文，en 查字典，未收录时优雅回退中文。 */
+/** 中文原文即 key：zh 直接返回原文，其他语言查字典并自动回退英文。 */
 function readLocale(): Locale {
   try {
-    return window.localStorage.getItem(STORAGE_KEY) === "en" ? "en" : "zh";
+    const saved = window.localStorage.getItem(STORAGE_KEY);
+    return LOCALES.some((l) => l.id === saved) ? (saved as Locale) : "zh";
   } catch {
     return "zh";
   }
@@ -26,7 +30,8 @@ function persist(locale: Locale) {
 }
 
 export function applyLocale(locale: Locale) {
-  document.documentElement.lang = locale === "zh" ? "zh-CN" : "en";
+  const meta = LOCALES.find((l) => l.id === locale);
+  document.documentElement.lang = meta?.htmlLang ?? "zh-CN";
 }
 
 function escapeRegExp(s: string): string {
@@ -39,28 +44,46 @@ interface Template {
   holes: number;
 }
 
-/** 把字典里含 {n} 的条目编译成正则，匹配渲染时已插入数字的文本。 */
-const templates: Template[] = Object.entries(EN)
-  .filter(([key]) => key.includes("{n}"))
-  .map(([key, value]) => {
-    const parts = key.split("{n}");
-    const pattern = `^${parts.map(escapeRegExp).join("(\\d[\\d,]*(?:\\.\\d+)?)")}$`;
-    return { re: new RegExp(pattern), value, holes: parts.length - 1 };
-  });
+interface Matcher {
+  dict: Record<string, string>;
+  templates: Template[];
+  fallback: RegExp;
+}
+
+/**
+ * 每种语言合并 EN 基线与自己的覆盖词条：新增语种只需翻译客户最常看到的
+ * 市场化文案，后台与长尾文案自动回退英文，不会出现半中半外文的界面。
+ */
+const matcherCache = new Map<Locale, Matcher>();
+
+function matcherFor(locale: Locale): Matcher {
+  const cached = matcherCache.get(locale);
+  if (cached) return cached;
+  const dict: Record<string, string> = locale === "zh" ? {} : {
+    ...EN, ...(EXTRA[locale] ?? {}), ...(SECTION_COPY[locale] ?? {}),
+  };
+  const templates: Template[] = Object.entries(dict)
+    .filter(([key]) => key.includes("{n}"))
+    .map(([key, value]) => {
+      const parts = key.split("{n}");
+      const pattern = `^${parts.map(escapeRegExp).join("(\\d[\\d,]*(?:\\.\\d+)?)")}$`;
+      return { re: new RegExp(pattern), value, holes: parts.length - 1 };
+    });
+  const fallbackKeys = Object.keys(dict)
+    .filter((key) => /[\u4e00-\u9fff]/.test(key) && !key.includes("{n}"))
+    .sort((a, b) => b.length - a.length);
+  const matcher: Matcher = {
+    dict, templates,
+    fallback: new RegExp(fallbackKeys.map(escapeRegExp).join("|"), "g"),
+  };
+  matcherCache.set(locale, matcher);
+  return matcher;
+}
 
 /** JSX 会把换行与缩进折叠成空格，字典 key 与运行时文本都按同一规则规范化。 */
 export function normalizeKey(text: string): string {
   return text.replace(/\s+/g, " ").trim();
 }
-
-/**
- * 兜底：整串未命中时，把字典里较长的中文片段逐段替换。
- * 用于「上限 $50」「拒绝 3 次」这类数字/货币与中文混排且未单列模板的文案。
- */
-const fallbackKeys = Object.keys(EN)
-  .filter((key) => /[\u4e00-\u9fff]/.test(key) && !key.includes("{n}"))
-  .sort((a, b) => b.length - a.length);
-const fallbackPattern = new RegExp(fallbackKeys.map(escapeRegExp).join("|"), "g");
 
 /** 翻译单个字符串；保留首尾空白，支持精确匹配、数字模板与片段兜底。 */
 export function translate(text: string, locale: Locale): string {
@@ -70,10 +93,11 @@ export function translate(text: string, locale: Locale): string {
   const core = normalizeKey(text);
   if (!core) return text;
 
-  const exact = EN[core];
+  const m = matcherFor(locale);
+  const exact = m.dict[core];
   if (exact !== undefined) return leading + exact + trailing;
 
-  for (const tpl of templates) {
+  for (const tpl of m.templates) {
     const match = tpl.re.exec(core);
     if (!match) continue;
     let out = tpl.value;
@@ -82,7 +106,7 @@ export function translate(text: string, locale: Locale): string {
     }
     return leading + out + trailing;
   }
-  const replaced = core.replace(fallbackPattern, (match) => EN[match] ?? match);
+  const replaced = core.replace(m.fallback, (match) => m.dict[match] ?? match);
   return replaced === core ? text : leading + replaced + trailing;
 }
 
@@ -168,23 +192,28 @@ export function T({ children }: { children: ReactNode }) {
   return <>{translateNode(children, locale)}</>;
 }
 
-/** 语言切换按钮，放在公开页头部与控制台侧栏。 */
+/** 语言选择器：原生 select 保证键盘可达、屏幕阅读器可读、移动端可点。 */
 export function LocaleToggle({ compact = false }: { compact?: boolean }) {
   // 该控件渲染在两个外壳的 T 树内部，但组件自身是黑盒，需显式调用 t()。
   const { locale, setLocale, t } = useI18n();
-  const next: Locale = locale === "zh" ? "en" : "zh";
   return (
-    <button
-      type="button"
-      onClick={() => setLocale(next)}
-      aria-label={locale === "zh" ? "Switch to English" : "Switch to Chinese"}
-      title={locale === "zh" ? "Switch to English" : "Switch to Chinese"}
-      className={compact
-        ? "flex items-center gap-2 px-3 py-2 rounded-ds text-sm text-ink-muted hover:text-ink hover:bg-canvas w-full transition-colors"
-        : "h-9 px-2.5 inline-flex items-center justify-center rounded-ds text-xs font-semibold text-ink-muted hover:text-ink hover:bg-canvas transition-colors"}
-    >
+    <label className={compact
+      ? "flex items-center gap-2 px-3 py-2 rounded-ds text-sm text-ink-muted hover:bg-canvas w-full transition-colors"
+      : "inline-flex items-center gap-1.5 h-9 px-2 rounded-ds text-xs font-semibold text-ink-muted hover:text-ink hover:bg-canvas transition-colors"}>
+      <Languages className="h-4 w-4 shrink-0" aria-hidden="true" />
       {compact && <span className="text-xs">{t("语言")}</span>}
-      <span className="tabular-nums">{locale === "zh" ? "EN" : "Chinese"}</span>
-    </button>
+      <select
+        data-testid="locale-select"
+        aria-label="Interface language"
+        title={t("界面语言")}
+        value={locale}
+        onChange={(e) => setLocale(e.target.value as Locale)}
+        className={compact
+          ? "flex-1 min-w-0 bg-transparent text-sm text-ink cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-ds"
+          : "bg-transparent text-xs font-semibold text-ink cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-ds"}
+      >
+        {LOCALES.map((l) => <option key={l.id} value={l.id}>{t(l.native)}</option>)}
+      </select>
+    </label>
   );
 }

@@ -106,7 +106,7 @@ export default function MonitorPage() {
                 <Activity className="h-5 w-5 text-accent" />采集健康告警
               </h2>
               <p className="text-sm text-ink-muted" data-field="collection_health">
-                无可疑批次。suspect 批次只在此栏显示「采集健康」告警，已排除出业务指标分母，不触发品牌表现变化事件。
+                待复核的运行只出现在这里，已排除出指标统计，不会触发品牌表现变化。
               </p>
               <p className="mt-2 text-xs text-ink-subtle">仅描述观测数值，不作因果推断；阈值由本平台设定。</p>
             </Card>

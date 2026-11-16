@@ -8,7 +8,7 @@ const ROWS: { label: string; geolens: string; manual: string; seo: string }[] = 
   { label: "原始 AI 回答证据", geolens: "逐条保留，可下钻", manual: "不系统留存", seo: "通常不覆盖" },
   { label: "引用域名 / 页面路径", geolens: "逐条可追溯", manual: "需手工记录", seo: "以外链数据为主" },
   { label: "提及 / 推荐 / 链接拆分", geolens: "分别统计", manual: "难以区分", seo: "不适用" },
-  { label: "失败运行标注", geolens: "单独标注，不计分母", manual: "容易混入", seo: "不适用" },
+  { label: "失败运行标注", geolens: "单独标注，不参与计算", manual: "容易混入", seo: "不适用" },
   { label: "免注册试用", geolens: "支持（免费站点检查）", manual: "不适用", seo: "多需注册" },
   { label: "结构化数据 / llms.txt 建议", geolens: "随检查给出", manual: "需自行查资料", seo: "部分覆盖" },
   { label: "起步价格", geolens: "$0 起，$39 一次性审计", manual: "人力成本", seo: "按月订阅" },
@@ -21,7 +21,7 @@ const FAQ = [
   },
   {
     q: "为什么不用「综合分」？",
-    a: "因为合并成单一分数会掩盖失败运行、样本偏差与逐模型差异。我们保留逐意图、逐模型的原始指标，每个比例都能下钻到 run_id。",
+    a: "因为一个总分会掩盖模型之间的差异。我们把每个模型、每个问题的结果分开列，每个数字都能点开看到原始回答。",
   },
   {
     q: "检查通过就等于会被 AI 推荐吗？",
@@ -78,7 +78,7 @@ export default function ComparePage() {
           <ul className="mt-4 space-y-2.5">
             {[
               "你需要知道 AI 回答里到底提了谁、引用了哪个域名",
-              "你要把「改动前后」用同题、同口径的 matched comparison 说清楚",
+              "你要用同一组问题，把改动前后的差别说清楚",
               "你要向下游同事或客户展示可复核的证据，而不是主观分数",
             ].map((t) => (
               <li key={t} className="flex items-start gap-2 text-sm text-ink-muted">

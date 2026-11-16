@@ -34,9 +34,10 @@ GeoLens AI 是一个 AEO / GEO（Answer / Generative Engine Optimization）可�
 - **四数隔离**：`planned / usable / failed / suspect` 互不折算；可疑批次只触发「采集健康」告警。
 - **跨语言并列观察**：不同语言问题集分别生成、分别计费；检索语言未判定与 `locale_mismatch` 的运行不进默认分母。
 - **独立参考区**：DR / DA 等用户自述的传统 SEO 指标单独成表，标注「用户自述，未经核验」。
-- **中 / 英双语**：全站切换、`<html lang>` 同步、`localStorage` 持久化，英文模式零中文残留（E2E 断言）。
+- **8 种界面语言**：简体中文、English、繁體中文、日本語、한국어、Español、Français、Deutsch；下拉切换、`<html lang>` 同步、`localStorage` 持久化。市场化文案逐语言本地化，长尾后台文案自动回退英文，非中文语种零中文残留（E2E 断言）。
 - **登录与鉴权**：bcrypt 密码哈希 + 随机会话；公开 / 需登录 / 管理员三组路由，`account_id` 只从会话取。
 - **订阅开通**：套餐 CTA 跳 `/subscribe` 三步开通；`pricing` 与 `billing` 共用运行时套餐目录。
+- **海外收款**：Airwallex（空中云汇）与 PayPal 托管收银台，支持银行卡、Apple Pay、Google Pay、PayPal 余额；回调强制验签，订单幂等激活。凭证缺失时自动降级为演示网关。详见 [`docs/payments.md`](docs/payments.md)。
 - **MCP 只读接入**：独立 Agent token 与 `tools/list` 固定包装，裁切时明确提示「能力集不完整」。
 
 ## 技术栈
@@ -127,7 +128,11 @@ export PERPLEXITY_API_KEY=pplx-...
 | GET | `/api/v1/brands` | 品牌列表 |
 | GET | `/api/v1/brands/:id/diagnose` | 诊断报告（flag on 时带四数 / 跨语言说明 / 独立参考区） |
 | GET | `/api/v1/plans` | 运行时套餐目录 |
-| POST | `/api/v1/billing/checkout` | 创建订单（`account_id` 只取会话） |
+| POST | `/api/v1/billing/checkout` | 创建订单（`account_id` 只取会话；可选 `provider`） |
+| GET | `/api/v1/billing/providers` | 当前部署可用的收款方式与支持的支付工具 |
+| GET | `/api/v1/billing/orders/:id` | 订单状态（校验归属，供前端轮询） |
+| POST | `/api/v1/billing/orders/:id/return` | 托管收银台回跳，完成扣款并开通 |
+| POST | `/api/v1/billing/webhook/:provider` | **匿名但强制验签**的供应商回调 |
 | GET | `/api/v1/delta/status` | flag 状态、口径版本、阈值配置、迁移结果 |
 | GET | `/api/v1/delta/ci-assertions` | §6 全部静态断言结果 |
 
@@ -157,7 +162,18 @@ cd frontend && npm run build
 BASE_URL=http://127.0.0.1:8080 PW_CHANNEL=chrome npx playwright test
 ```
 
-CI 在每次 push / PR 运行：Go 测试、Δ 静态断言、禁词扫描、前端构建、Playwright 25 个用例。
+CI 在每次 push / PR 运行：Go 测试、Δ 静态断言、禁词扫描、前端构建、Playwright 27 个用例。
+
+## 海外收款配置
+
+收款走供应商托管页面，本服务不接触银行卡信息。未配置任何凭证时只有「演示收银台」，会立即开通且不扣款。
+
+在商户后台创建 Webhook，指向（域名换成你的部署地址）：
+
+- Airwallex：`POST https://<host>/api/v1/billing/webhook/airwallex`
+- PayPal：`POST https://<host>/api/v1/billing/webhook/paypal`
+
+买家付款后的回跳地址由服务端按浏览器 `Origin` 自动构造为 `/subscribe?order=<id>&payment=return|cancel`，无需在后台配置。完整配置、验签方式、测试与上线核对见 [`docs/payments.md`](docs/payments.md)。
 
 ## 环境变量
 
@@ -170,6 +186,12 @@ CI 在每次 push / PR 运行：Go 测试、Δ 静态断言、禁词扫描、前
 | `GEOLENS_DEMO_EMAIL` / `GEOLENS_DEMO_PASSWORD` | `demo@geolens.ai` / `demo1234` | 首次启动写入的演示管理员 |
 | `GEOLENS_ADMIN_TOKEN` | 启动时生成 | 管理端点的 `X-Admin-Token` |
 | `GEOLENS_FLAG_AEO_DELTA_20261116` | `on` | 设为 `off` 回滚到 v1.0 口径 |
+| `AIRWALLEX_CLIENT_ID` / `AIRWALLEX_API_KEY` | 未设置 | 空中云汇 API 凭证；两者齐全才启用 |
+| `AIRWALLEX_API_BASE` | `https://api-demo.airwallex.com` | 生产用 `https://api.airwallex.com` |
+| `AIRWALLEX_WEBHOOK_SECRET` | 未设置 | Airwallex 回调 HMAC 密钥（缺失则拒绝回调） |
+| `PAYPAL_CLIENT_ID` / `PAYPAL_CLIENT_SECRET` | 未设置 | PayPal REST 应用凭证；两者齐全才启用 |
+| `PAYPAL_API_BASE` | `https://api-m.sandbox.paypal.com` | 生产用 `https://api-m.paypal.com` |
+| `PAYPAL_WEBHOOK_ID` | 未设置 | 商户后台 Webhook ID，用于验签 |
 | `OPENAI_API_KEY` 等 | 未设置 | 各模型 API Key |
 
 ## 文档
@@ -177,5 +199,6 @@ CI 在每次 push / PR 运行：Go 测试、Δ 静态断言、禁词扫描、前
 - [`docs/EXECUTION_SPEC_v1.0.md`](docs/EXECUTION_SPEC_v1.0.md)：原始执行规格书（Δ/EX/TC-16/DoD 全文）
 - [`docs/execution-spec-20261116.md`](docs/execution-spec-20261116.md)：Δ 批次落地说明与验收清单
 - [`docs/increment-template.md`](docs/increment-template.md)：三级证据标记模板与评审检查表
+- [`docs/payments.md`](docs/payments.md)：Airwallex / PayPal 接入、验签与上线核对
 - [`docs/mcp.md`](docs/mcp.md)：MCP 只读接入
 - [`banned-phrases.txt`](banned-phrases.txt)：全站禁词表（CI 扫描）

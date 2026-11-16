@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -61,6 +62,11 @@ func (s *Server) registerPlatformRoutes(api, protected, admin *gin.RouterGroup, 
 	protected.GET("/billing/quota", s.billingQuota)
 	protected.POST("/billing/checkout", s.billingCheckout)
 	protected.POST("/billing/pay", s.billingPay)
+	// 海外收款：支付方式目录、订单状态轮询与买家回跳需登录；供应商回调匿名但强制验签。
+	protected.GET("/billing/providers", s.billingProviders)
+	protected.GET("/billing/orders/:id", s.billingOrder)
+	protected.POST("/billing/orders/:id/return", s.billingReturn)
+	api.POST("/billing/webhook/:provider", s.billingProviderWebhook)
 	admin.POST("/billing/webhook", s.billingWebhook)
 	admin.POST("/billing/reconcile", s.billingReconcile)
 	admin.POST("/redeem/codes", s.generateRedeemCodes)
@@ -390,8 +396,9 @@ func (s *Server) billingQuota(c *gin.Context) {
 
 func (s *Server) billingCheckout(c *gin.Context) {
 	var body struct {
-		Plan domain.PlanID      `json:"plan"`
-		Kind domain.PaymentKind `json:"kind"`
+		Plan     domain.PlanID      `json:"plan"`
+		Kind     domain.PaymentKind `json:"kind"`
+		Provider billing.Provider   `json:"provider"`
 	}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -399,6 +406,13 @@ func (s *Server) billingCheckout(c *gin.Context) {
 	}
 	if body.Kind == "" {
 		body.Kind = domain.PaySubscription
+	}
+	if body.Provider == "" {
+		body.Provider = billing.ProviderSandbox
+	}
+	if _, ok := s.payments.Get(body.Provider); !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "payment provider not available"})
+		return
 	}
 	// 账户身份来自会话，body 里即便带 account_id 也会被忽略。
 	id := currentAccount(c)
@@ -411,7 +425,145 @@ func (s *Server) billingCheckout(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"order": order, "steps": []string{"选档", "确认权益", "支付/开通"}})
+	resp := gin.H{"order": order, "provider": body.Provider,
+		"steps": []string{"选档", "确认权益", "支付/开通"}}
+	// 免费层直接开通，无需收银台。
+	if order.Status == domain.PaySucceeded {
+		resp["next"] = "done"
+		c.JSON(http.StatusOK, resp)
+		return
+	}
+	base := publicBaseURL(c)
+	returnURL := base + "/subscribe?order=" + order.ID + "&payment=return"
+	cancelURL := base + "/subscribe?order=" + order.ID + "&payment=cancel"
+	session, err := s.payments.CreateSession(c.Request.Context(), body.Provider, *order, returnURL, cancelURL)
+	if err != nil {
+		// 订单保留 pending，可换一种支付方式重试；不产生任何权益。
+		c.JSON(http.StatusBadGateway, gin.H{"error": err.Error(), "order": order, "next": "retry"})
+		return
+	}
+	s.billing.SaveSession(session)
+	resp["checkout_url"] = session.CheckoutURL
+	resp["session_id"] = session.SessionID
+	if session.CheckoutURL == "" {
+		resp["next"] = "pay" // 演示网关沿用本地即时开通
+	} else {
+		resp["next"] = "redirect" // 跳转供应商托管收银台
+	}
+	c.JSON(http.StatusOK, resp)
+}
+
+// publicBaseURL 只用于构造供应商回跳地址，优先取浏览器 Origin。
+func publicBaseURL(c *gin.Context) string {
+	if origin := strings.TrimRight(c.GetHeader("Origin"), "/"); origin != "" {
+		return origin
+	}
+	scheme := "http"
+	if c.Request.TLS != nil {
+		scheme = "https"
+	}
+	if fwd := c.GetHeader("X-Forwarded-Proto"); fwd != "" {
+		scheme = fwd
+	}
+	return scheme + "://" + c.Request.Host
+}
+
+// billingProviders 返回当前部署实际可用的收款方式；凭证缺失时只有演示网关。
+func (s *Server) billingProviders(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"providers": s.payments.List(),
+		"note":      "收款由第三方托管页面完成，本服务不接触银行卡信息。",
+	})
+}
+
+func (s *Server) billingOrder(c *gin.Context) {
+	id := currentAccount(c)
+	orderID := c.Param("id")
+	owned := false
+	for _, o := range s.billing.Panel(id).Orders {
+		if o.ID == orderID {
+			owned = true
+			break
+		}
+	}
+	if !owned {
+		c.JSON(http.StatusForbidden, gin.H{"error": "order does not belong to current account"})
+		return
+	}
+	order, ok := s.billing.Order(orderID)
+	if !ok {
+		c.JSON(http.StatusNotFound, gin.H{"error": "order not found"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"order": order})
+}
+
+// billingReturn 处理买家从托管收银台跳回：PayPal 需在此完成 capture，
+// Airwallex 已由供应商扣款，这里只补齐开通；与 Webhook 重复投递天然幂等。
+func (s *Server) billingReturn(c *gin.Context) {
+	id := currentAccount(c)
+	orderID := c.Param("id")
+	owned := false
+	for _, o := range s.billing.Panel(id).Orders {
+		if o.ID == orderID {
+			owned = true
+			break
+		}
+	}
+	if !owned {
+		c.JSON(http.StatusForbidden, gin.H{"error": "order does not belong to current account"})
+		return
+	}
+	session, ok := s.billing.Session(orderID)
+	if !ok || session.Provider == billing.ProviderSandbox {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "no hosted checkout session for this order"})
+		return
+	}
+	if err := s.payments.Capture(c.Request.Context(), session.Provider, session.SessionID); err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"error": err.Error(), "next": "retry"})
+		return
+	}
+	order, _ := s.billing.Order(orderID)
+	ev := billing.WebhookEvent{
+		EventID: "return_" + session.SessionID, OrderID: orderID,
+		Status: domain.PaySucceeded, IdempotencyKey: order.IdempotencyKey,
+	}
+	settled, err := s.billing.ApplyWebhook(ev)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"order": settled, "usage": s.billing.Usage(id)})
+}
+
+// billingProviderWebhook 匿名可达，但必须先通过供应商签名校验才允许改订单状态。
+func (s *Server) billingProviderWebhook(c *gin.Context) {
+	provider := billing.Provider(c.Param("provider"))
+	if _, ok := s.payments.Get(provider); !ok {
+		c.JSON(http.StatusNotFound, gin.H{"error": "unknown payment provider"})
+		return
+	}
+	body, err := io.ReadAll(io.LimitReader(c.Request.Body, 1<<20))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	ev, err := s.payments.VerifyWebhook(c.Request.Context(), provider, c.Request.Header, body)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "webhook signature verification failed"})
+		return
+	}
+	if ev.IdempotencyKey == "" {
+		if order, ok := s.billing.Order(ev.OrderID); ok {
+			ev.IdempotencyKey = order.IdempotencyKey
+		}
+	}
+	order, err := s.billing.ApplyWebhook(*ev)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"order": order, "idempotent": true})
 }
 
 func (s *Server) billingPay(c *gin.Context) {

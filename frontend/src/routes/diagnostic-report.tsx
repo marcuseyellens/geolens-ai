@@ -81,7 +81,7 @@ export default function DiagnosticReportPage() {
             品牌：{report.brand_name} | 生成时间：{new Date(report.generated_at).toLocaleString()}
           </p>
         </div>
-        <Badge>{report.methodology_version}</Badge>
+        <Badge>保留原始回答</Badge>
       </div>
 
       {/* 执行摘要（F-501.1） */}
@@ -607,29 +607,29 @@ function DeltaPanels({ report }: { report: DiagnosticReport }) {
     <div className="space-y-4">
       <Card>
         <h2 className="text-lg font-semibold mb-1 flex items-center gap-2">
-          <Network className="h-5 w-5 text-accent" />运行四数
+          <Network className="h-5 w-5 text-accent" />本次运行情况
         </h2>
         <p className="text-xs text-ink-subtle mb-4">
-          四数互不折算；suspect 单独计数，不并入 usable 或 failed。每个数字都标注 source_type 与 methodology_version。
+          计划、成功、失败、待复核分开统计，互不混算。
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {([
             ["planned", "计划", c.planned],
             ["usable", "有效", c.usable],
             ["failed", "失败", c.failed],
-            ["suspect", "可疑批次", c.suspect],
+            ["suspect", "待复核", c.suspect],
           ] as [string, string, number][]).map(([key, label, value]) => (
             <div key={key} className="rounded-ds border border-edge p-3">
               <p className="text-xs text-ink-muted">{label}</p>
               <p className="mt-1 text-2xl font-semibold text-ink tabular-nums">{value}</p>
               <p className="mt-0.5 text-[10px] text-ink-subtle" data-field={key}>
-                {report.methodology_version} · n_valid {c.usable}
+                每个数字都能点开看原文
               </p>
             </div>
           ))}
         </div>
         {report.legacy_counts && (
-          <Callout tone="info" className="mt-3">旧口径（1.0）：三数，缺 suspect 按 0 展示，未用 1.1 算法重算。</Callout>
+          <Callout tone="info" className="mt-3">旧版本报告只统计三项，未用新算法重算。</Callout>
         )}
         {report.language_notice && (
           <p className="mt-3 text-xs text-ink-muted flex items-start gap-2">
@@ -641,16 +641,16 @@ function DeltaPanels({ report }: { report: DiagnosticReport }) {
       {report.reference_only && report.reference_only.length > 0 && (
         <Card>
           <h2 className="text-lg font-semibold mb-1 flex items-center gap-2">
-            <FileCode2 className="h-5 w-5 text-accent" />独立参考区
+            <FileCode2 className="h-5 w-5 text-accent" />自己填的数据
           </h2>
           <p className="text-xs text-ink-subtle mb-3">
-            用户自述，未经核验；传统 SEO 指标，不代表 AI 答案可见性。此区不进图表、不进 API 聚合、不参与排序或均值。
+            由客户自行填写，未经核验；不进图表、不参与计算。
           </p>
           <Table
             columns={[
               { key: "metric", label: "指标" },
               { key: "value", label: "数值" },
-              { key: "source_type", label: "来源类型" },
+              { key: "source_type", label: "来源" },
               { key: "disclaimer", label: "说明" },
             ]}
             rows={report.reference_only.map((m) => ({

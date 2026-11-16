@@ -105,7 +105,9 @@ type Engine struct {
 	processedEvents map[string]bool
 	// activated 记录已完成权益开通的订单，供对账脚本补齐漏单。
 	activated map[string]bool
-	feedback  []RedeemFeedback
+	// sessions 记录宿主收银台会话，订单归属校验与买家回跳都依赖它。
+	sessions map[string]*CheckoutSession
+	feedback []RedeemFeedback
 }
 
 func NewEngine(gateway PaymentGateway, clock func() time.Time) *Engine {
@@ -120,7 +122,38 @@ func NewEngine(gateway PaymentGateway, clock func() time.Time) *Engine {
 		accounts: map[string]*Account{}, orders: map[string]*domain.Order{},
 		invoices: map[string][]domain.Invoice{}, codes: map[string]*domain.RedeemCode{},
 		processedEvents: map[string]bool{}, activated: map[string]bool{},
+		sessions: map[string]*CheckoutSession{},
 	}
+}
+
+// SaveSession 保存供应商会话；同一订单重复创建会话会覆盖前一条。
+func (e *Engine) SaveSession(s *CheckoutSession) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.sessions[s.OrderID] = s
+}
+
+// Session / Order 供 handler 校验订单归属与查询支付状态，返回副本避免外部改写。
+func (e *Engine) Session(orderID string) (*CheckoutSession, bool) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	s, ok := e.sessions[orderID]
+	if !ok {
+		return nil, false
+	}
+	copy := *s
+	return &copy, true
+}
+
+func (e *Engine) Order(orderID string) (*domain.Order, bool) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	o, ok := e.orders[orderID]
+	if !ok {
+		return nil, false
+	}
+	copy := *o
+	return &copy, true
 }
 
 func periodOf(t time.Time) string { return t.Format("2006-01") }

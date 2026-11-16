@@ -20,6 +20,8 @@ jobs:
         run: go test ./internal/delta/... -run 'TestTC16' -v
       - name: 全站禁词扫描（沿用 A-WP-2 §6）
         run: go test ./internal/aeo/... -run 'TestAcceptance09_NeutralityAndBannedWords|TestEvaluateChecklistAllGreen' -v
+      - name: 海外收款回归（供应商模拟、验签、降级、订单归属）
+        run: go test ./internal/billing/... ./api/handlers/... -run 'TestProvider|TestAirwallex|TestPayPal|TestHosted|TestPayment|TestCheckout' -v
       - name: 后端构建
         run: go build ./...
 

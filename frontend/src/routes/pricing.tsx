@@ -90,7 +90,7 @@ export default function PricingPage() {
         </h1>
         <p className="mx-auto mt-3 max-w-2xl text-sm text-ink-muted leading-relaxed">
           L0 完全免费且无需注册；一次性审计与订阅各自独立，均按可核验的运行结果计费，
-          <strong className="text-ink">失败的运行不计入分母，也不会收费</strong>。
+          <strong className="text-ink">没有结果的检查不收费</strong>。
         </p>
       </div>
 
@@ -132,7 +132,7 @@ export default function PricingPage() {
           <Sparkles className="h-5 w-5 text-accent" />
           <h2 className="text-xl font-bold text-ink">L3 · 按月订阅监测</h2>
         </div>
-        <p className="mt-2 text-sm text-ink-muted">配额按可用运行计；每个比例数字都可下钻到 run_id。</p>
+        <p className="mt-2 text-sm text-ink-muted">按成功完成的检查计费，每个数字都能看到原始回答。</p>
 
         <div className="mt-6 overflow-x-auto">
           <table className="w-full min-w-[720px] border-separate border-spacing-0 text-sm">
@@ -149,7 +149,7 @@ export default function PricingPage() {
             </thead>
             <tbody>
               <Row label="项目数" values={TIERS.map((t) => t.projects)} />
-              <Row label="月度可用配额" values={TIERS.map((t) => t.quota)} />
+              <Row label="每月检查次数" values={TIERS.map((t) => t.quota)} />
               {["按意图持续跑题", "证据下钻与指标看板", "自定义导出", "MCP / API 接入", "告警与复扫对比"].map((cap, i) => (
                 <Row key={cap} label={cap} values={TIERS.map((t) => t.features[i])} />
               ))}
@@ -172,20 +172,20 @@ export default function PricingPage() {
 
       {/* 口径说明 */}
       <div className="mt-12 space-y-4">
-        <Callout tone="warn" title="关于计费与结果口径">
+        <Callout tone="warn" title="计费与结果说明">
           失败、超时、无引用的运行会被单独标注且不计入分母，也不会占用配额。我们提供的是可核验的事实与证据，
           <strong className="text-ink">不提供「综合分」，也不承诺任何模型一定推荐你</strong>。
         </Callout>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Note icon={<Info className="h-4 w-4" />} title="价格说明"
             text="$39 一次性审计、$19 复扫 add-on 与三档订阅价格沿用公开定价；正式定价与权益细则以服务条款为准。" />
-          <Note icon={<ShieldCheck className="h-4 w-4" />} title="数据口径"
-            text="每个百分比都由真实运行支撑，可一路下钻到原始 AI 回答、引用域名与页面路径。" />
+          <Note icon={<ShieldCheck className="h-4 w-4" />} title="数字从哪来"
+            text="每个百分比都能点开看到原始 AI 回答和引用页面。" />
           <Note icon={<Activity className="h-4 w-4" />} title="取消与退还"
             text="订阅按月计费，随时取消，当月配额用到周期结束。一次性审计一经交付不支持因「未被推荐」退款。" />
           {/* D-6 / EX-03：多语言按不同采集任务分别计费，分别计入 prompt quota。 */}
-          <Note icon={<Globe className="h-4 w-4" />} title="多语言配额打包"
-            text="同一品类多语言按不同采集任务分别计费；每套问题集独立计入 prompt quota，不把一种语言直接翻译复用为另一种语言。" />
+          <Note icon={<Globe className="h-4 w-4" />} title="多语言怎么算"
+            text="每个语种单独出题、单独计费，不会把中文问题直接翻译成英文重复使用。" />
         </div>
         <p className="text-center text-xs text-ink-subtle">技术就绪 ≠ 被推荐。所有套餐均不构成对 AI 推荐结果、排名或转化的因果承诺。</p>
         <p className="mx-auto mt-3 max-w-3xl text-center text-xs leading-relaxed text-ink-subtle">{NEUTRALITY}</p>

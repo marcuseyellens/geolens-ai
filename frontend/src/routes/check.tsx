@@ -373,7 +373,7 @@ function CrawlerVisitPanel({ score }: { score: SiteScore }) {
         <Badge tone={row.verdict === "pass" ? "positive" : row.verdict === "unknown" ? "neutral" : "warn"}>
           {verdictLabel[row.verdict] || "未判定"}
         </Badge>
-        证据来源 {row.evidence_source}；平台提示仅为线索，未判定项不进分母、不扣分。
+        证据：{row.evidence_source}。平台报错只是线索，未确认的项目不参与计算，也不会扣分。
       </p>
       {row.fix_advice && <p className="mt-2 text-xs text-ink-muted">修复：{row.fix_advice}</p>}
     </Card>
@@ -392,7 +392,7 @@ function ProfileNotice({ score }: { score: SiteScore }) {
         三类来源分表展示：第一方自述、第三方实测、第三方转述。
         {score.provenance && (
           <span className="ml-1 text-ink-subtle">
-            口径 {score.provenance.methodology_version} · n_valid {score.provenance.n_valid}
+            数据版本 {score.provenance.methodology_version} · 有效样本 {score.provenance.n_valid}
           </span>
         )}
       </p>
@@ -421,7 +421,7 @@ function AdmissionPanel({ score }: { score: SiteScore }) {
         <span className="text-xs text-ink-subtle">{checks.length} 项检查</span>
       </div>
       <p className="mt-1.5 text-xs text-ink-muted">
-        概率性判断，阈值由本平台设定，非任何 AI 平台的收录规则。未判定项不进分母、不扣分。
+        结果仅供参考，标准由本平台设定，不代表任何 AI 平台的收录规则。未确认的项目不参与计算，也不会扣分。
       </p>
 
       {flagged.length > 0 ? (

@@ -29,7 +29,7 @@ const FAQ = [
   },
   {
     q: "$39 一次性审计包含什么？",
-    a: "30 个 buyer question（含 5 个品牌核验题）的真实回答、逐条证据下钻、人工复核后的修复清单，以及可直接发布的修复件打包下载。失败的运行不计入分母，也不会收费。",
+    a: "30 个 buyer question（含 5 个品牌核验题）的真实回答、逐条证据下钻、人工复核后的修复清单，以及可直接发布的修复件打包下载。没有结果的检查不收费，也不占用额度。",
   },
   {
     q: "订阅可以随时取消吗？",
@@ -67,13 +67,10 @@ export default function LandingPage() {
             AEO · Answer Engine Optimization
           </div>
           <h1 className="mt-6 text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-ink">
-            看懂跨平台差异，{" "}
-            <span className="tech-gradient-text">拿到能改的东西</span>
+            <span className="tech-gradient-text">看看 AI 回答里有没有你</span>
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-base sm:text-lg text-ink-muted leading-relaxed">
-            逐模型并列呈现品牌在 AI 回答里的真实可见性，每条结论都能下钻到原始证据。
-            <br className="hidden sm:block" />
-            从一个免注册的网址检查开始，全程不需要邮箱和信用卡。
+            输入网址，一次看清 ChatGPT、Perplexity 等 AI 是否提到你的品牌，以及下一步该改什么。
           </p>
 
           <form onSubmit={startCheck} className="mx-auto mt-9 max-w-2xl">
@@ -221,27 +218,27 @@ export default function LandingPage() {
               ))}
             </div>
             <div className="mt-4 pt-3 border-t border-edge flex items-center justify-between text-xs text-ink-subtle">
-              <span>run_id 可追溯 · 逐项证据</span>
+              <span>每条结论都能看到原始回答 · 逐项证据</span>
               <span>不承诺排名</span>
             </div>
           </Card>
         </div>
       </section>
 
-      {/* Δ-01~Δ-07：可核验的数据口径 */}
+      {/* Δ-01~Δ-07：每个数字都有据可查 */}
       <section id="methodology" className="border-t border-edge bg-surface">
         <div className="mx-auto max-w-6xl px-6 py-14">
-          <SectionEyebrow>可核验的数据口径</SectionEyebrow>
-          <h2 className="mt-3 text-2xl sm:text-3xl font-bold text-ink">数字怎么来的，都能查到</h2>
+          <SectionEyebrow>每个数字都有据可查</SectionEyebrow>
+          <h2 className="mt-3 text-2xl sm:text-3xl font-bold text-ink">看得见的依据，不是黑盒</h2>
           <p className="mt-3 max-w-3xl text-sm text-ink-muted leading-relaxed">
-            每个数字都标注来源类型与方法论版本。可疑批次、跨语言运行、用户自述指标各自隔离，不混进同一条结论。
+            报告里保留每一次 AI 回答的原文和引用链接，点两下就能看到。
           </p>
           <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { icon: Layers, title: "四数互不折算", text: "计划、有效、失败、可疑批次四数同屏；可疑批次单独计数，不并入有效或失败。" },
-              { icon: Globe, title: "跨语言并列观察", text: "不同语言的问题集分别生成、分别计入配额；检索语言未判定与不匹配的运行不进默认分母。" },
-              { icon: ShieldCheck, title: "独立参考区", text: "DR / DA 等用户自述的传统 SEO 指标单独成表，明确标注未经核验，不进图表、不参与排序或均值。" },
-              { icon: ClipboardCheck, title: "证据分行", text: "平台提示与实际观察分成两行；平台报错只作线索，不据此下收录结论。" },
+              { icon: Layers, title: "每次运行都单独记录", text: "计划、成功、失败、待复核分别统计，不会互相混算。" },
+              { icon: Globe, title: "不同语言，分开看", text: "每个语种单独出题、单独统计，翻译过来的结果不混在一起。" },
+              { icon: ShieldCheck, title: "自己填的数据，单独放", text: "DR、DA 这类数据只作参考，不参与任何计算或排名。" },
+              { icon: ClipboardCheck, title: "线索和事实，分开写", text: "平台报错只是线索，不会被当成收录结论。" },
             ].map((f) => (
               <Card key={f.title} className="h-full">
                 <f.icon className="h-5 w-5 text-accent" />
@@ -251,7 +248,7 @@ export default function LandingPage() {
             ))}
           </div>
           <p className="mt-6 text-center text-xs text-ink-subtle">
-            全部增量行为挂在 feature flag 之下，可一键回到上一口径；静态断言与 19 条自动用例在 CI 中执行。
+            新增能力可随时关闭并回到上一版本，每次发布都跑自动检查。
           </p>
         </div>
       </section>

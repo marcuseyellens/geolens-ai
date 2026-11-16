@@ -578,6 +578,26 @@ export interface QuotaDecision {
   message: string;
 }
 
+/** 海外收款供应商：id 与后端 billing.Provider 一致。 */
+export interface PaymentProvider {
+  id: "sandbox" | "airwallex" | "paypal";
+  name: string;
+  description: string;
+  methods: string[];
+  currencies: string[];
+  live: boolean;
+  sandbox_mode: boolean;
+}
+
+export interface CheckoutResponse {
+  order: Order;
+  provider: PaymentProvider["id"];
+  next: "pay" | "redirect" | "done" | "retry";
+  checkout_url?: string;
+  session_id?: string;
+  steps: string[];
+}
+
 export interface Order {
   id: string;
   account_id: string;
