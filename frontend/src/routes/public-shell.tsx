@@ -44,6 +44,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
             <a href="/#how" className="hover:text-ink transition-colors">工作原理</a>
             <Link to="/pricing" className="hover:text-ink transition-colors">定价</Link>
             <Link to="/compare" className="hover:text-ink transition-colors">对比</Link>
+            <Link to="/guide" className="hover:text-ink transition-colors">使用手册</Link>
             <a href="/#faq" className="hover:text-ink transition-colors">常见问题</a>
           </nav>
 
@@ -97,6 +98,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
               <li><Link to="/check" className="hover:text-ink">免费站点检查</Link></li>
               <li><Link to="/pricing" className="hover:text-ink">定价与套餐</Link></li>
               <li><Link to="/compare" className="hover:text-ink">方案对比</Link></li>
+              <li><Link to="/guide" className="hover:text-ink">使用手册</Link></li>
               <li><Link to="/app" className="hover:text-ink">控制台</Link></li>
             </ul>
           </div>

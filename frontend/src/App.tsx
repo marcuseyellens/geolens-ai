@@ -42,6 +42,7 @@ import ComparePage from "./routes/compare";
 import LoginPage from "./routes/login";
 import SubscribePage from "./routes/subscribe";
 import CompetitorPage from "./routes/competitor-page";
+import GuidePage from "./routes/guide";
 
 const navItems = [
   { path: "/app", label: "概览", icon: LayoutDashboard },
@@ -186,6 +187,7 @@ export default function App() {
         <Route path="/pricing" element={<PublicShell><PricingPage /></PublicShell>} />
         <Route path="/compare" element={<PublicShell><ComparePage /></PublicShell>} />
         <Route path="/redeem" element={<PublicShell><RedeemPage /></PublicShell>} />
+        <Route path="/guide" element={<PublicShell><GuidePage /></PublicShell>} />
         <Route path="/privacy" element={<PublicShell><LegalPage kind="privacy" /></PublicShell>} />
         <Route path="/terms" element={<PublicShell><LegalPage kind="terms" /></PublicShell>} />
         <Route path="/login" element={<PublicShell><LoginPage /></PublicShell>} />

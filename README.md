@@ -2,6 +2,15 @@
 
 > 把「AI 回答里到底提了谁」做成可核验的证据，而不是一个主观分数。
 
+## 产品使用手册
+
+[完整使用手册](docs/PRODUCT-GUIDE.md) 覆盖网页版、浏览器插件、iOS / Android App、套餐支付与结果口径。官网内可读版本：`/guide`（部署后访问 `https://<你的域名>/guide`）。
+
+- [快速开始](docs/PRODUCT-GUIDE.md#1-快速开始) · [网页版](docs/PRODUCT-GUIDE.md#2-网页版) · [浏览器插件](docs/PRODUCT-GUIDE.md#3-浏览器插件) · [iOS 与 Android App](docs/PRODUCT-GUIDE.md#4-ios-与-android-app)
+- [套餐与支付](docs/PRODUCT-GUIDE.md#5-套餐与支付) · [核心概念与口径](docs/PRODUCT-GUIDE.md#6-核心概念与口径) · [常见问题](docs/PRODUCT-GUIDE.md#7-常见问题)
+
+各端安装包见 [GitHub Releases](https://github.com/marcuseyellens/geolens-ai/releases)。
+
 GeoLens AI 是一个 AEO / GEO（Answer / Generative Engine Optimization）可见性检查与诊断平台。它读取公开页面、采集真实 buyer question 的模型回答，保留逐条原始答案与引用证据，输出**逐模型、逐意图**的指标与修复清单。
 
 本项目刻意不提供「综合分」，也不承诺任何模型的收录、推荐、排名或转化结果。**技术就绪 ≠ 被推荐**：所有分数只描述可观测的技术条件与回答内容。
