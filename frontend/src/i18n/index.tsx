@@ -10,6 +10,8 @@ export type Locale =
   | "zh" | "en" | "zh-Hant" | "ja" | "ko" | "es" | "fr" | "de";
 
 const STORAGE_KEY = "geolens-locale";
+const AUTO_KEY = "geolens-locale-auto-cache";
+const AUTO_TTL = 24 * 60 * 60 * 1000;
 
 /** 中文原文即 key：zh 直接返回原文，其他语言查字典并自动回退英文。 */
 function readLocale(): Locale {
@@ -19,6 +21,74 @@ function readLocale(): Locale {
   } catch {
     return "zh";
   }
+}
+
+function hasManualLocale(): boolean {
+  try {
+    const saved = window.localStorage.getItem(STORAGE_KEY);
+    return Boolean(saved && LOCALES.some((l) => l.id === saved));
+  } catch {
+    return false;
+  }
+}
+
+const COUNTRY_TO_LOCALE: Record<string, Locale> = {
+  CN: "zh", SG: "zh", TW: "zh-Hant", HK: "zh-Hant", MO: "zh-Hant",
+  JP: "ja", KR: "ko",
+  ES: "es", MX: "es", AR: "es", CO: "es", PE: "es", CL: "es", UY: "es", VE: "es",
+  FR: "fr", BE: "fr", LU: "fr",
+  DE: "de", AT: "de", CH: "de",
+};
+
+function localeFromCountry(code: unknown): Locale | null {
+  if (typeof code !== "string") return null;
+  return COUNTRY_TO_LOCALE[code.toUpperCase()] ?? "en";
+}
+
+/**
+ * 按请求方 IP 自动识别界面语言。只写自动缓存，不写 STORAGE_KEY，
+ * 因此用户在下拉框里选过的语言永远优先，E2E 预置 localStorage 也不受影响。
+ * IP 服务不可达时保持默认中文，不猜 navigator.language。
+ */
+async function detectLocaleByIP(): Promise<Locale | null> {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), 3000);
+  try {
+    const response = await fetch("https://ipwho.is/", {
+      cache: "no-store",
+      signal: controller.signal,
+    });
+    if (!response.ok) return null;
+    const data = (await response.json()) as { success?: boolean; country_code?: string };
+    if (!data.success) return null;
+    return localeFromCountry(data.country_code);
+  } catch {
+    return null;
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
+async function resolveAutoLocale(): Promise<Locale | null> {
+  try {
+    const raw = window.localStorage.getItem(AUTO_KEY);
+    if (raw) {
+      const cache = JSON.parse(raw) as { locale: Locale; at: number };
+      if (Date.now() - cache.at < AUTO_TTL && LOCALES.some((l) => l.id === cache.locale)) {
+        return cache.locale;
+      }
+    }
+  } catch {
+    // 缓存损坏则重新识别
+  }
+  const detected = await detectLocaleByIP();
+  if (!detected) return null;
+  try {
+    window.localStorage.setItem(AUTO_KEY, JSON.stringify({ locale: detected, at: Date.now() }));
+  } catch {
+    // 隐私模式下不缓存，本页仍然生效
+  }
+  return detected;
 }
 
 function persist(locale: Locale) {
@@ -165,6 +235,15 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(readLocale);
 
   useEffect(() => { applyLocale(locale); }, [locale]);
+
+  useEffect(() => {
+    if (hasManualLocale()) return;
+    let active = true;
+    void resolveAutoLocale().then((detected) => {
+      if (active && detected && !hasManualLocale()) setLocaleState(detected);
+    });
+    return () => { active = false; };
+  }, []);
 
   const setLocale = useCallback((next: Locale) => {
     persist(next);

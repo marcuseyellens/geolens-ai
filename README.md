@@ -35,6 +35,7 @@ GeoLens AI 是一个 AEO / GEO（Answer / Generative Engine Optimization）可�
 - **跨语言并列观察**：不同语言问题集分别生成、分别计费；检索语言未判定与 `locale_mismatch` 的运行不进默认分母。
 - **独立参考区**：DR / DA 等用户自述的传统 SEO 指标单独成表，标注「用户自述，未经核验」。
 - **8 种界面语言**：简体中文、English、繁體中文、日本語、한국어、Español、Français、Deutsch；下拉切换、`<html lang>` 同步、`localStorage` 持久化。市场化文案逐语言本地化，长尾后台文案自动回退英文，非中文语种零中文残留（E2E 断言）。
+- **按 IP 自动选语言**：首次访问且用户未手动选过时，请求 `https://ipwho.is/` 读取国家码并映射到对应语言（中国→简体、港台→繁体、日→日、韩→韩、西语/法语/德语国家→对应语种，其他→英文），结果在 `localStorage` 缓存 24 小时；服务不可达时保持默认简体中文。**手动下拉选择永远优先**，自动结果不会写入手动选择键，E2E 的 `geolens-locale` 预置与 8 选项断言不受影响。
 - **登录与鉴权**：bcrypt 密码哈希 + 随机会话；公开 / 需登录 / 管理员三组路由，`account_id` 只从会话取。
 - **订阅开通**：套餐 CTA 跳 `/subscribe` 三步开通；`pricing` 与 `billing` 共用运行时套餐目录。
 - **海外收款**：Airwallex（空中云汇）与 PayPal 托管收银台，支持银行卡、Apple Pay、Google Pay、PayPal 余额；回调强制验签，订单幂等激活。凭证缺失时自动降级为演示网关。详见 [`docs/payments.md`](docs/payments.md)。
