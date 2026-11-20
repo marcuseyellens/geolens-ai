@@ -8,20 +8,22 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/geolens/geolens/api/handlers"
-	"github.com/geolens/geolens/application"
-	"github.com/geolens/geolens/domain"
-	"github.com/geolens/geolens/internal/aimodel"
-	"github.com/geolens/geolens/internal/auth"
-	"github.com/geolens/geolens/internal/billing"
-	"github.com/geolens/geolens/internal/collector"
-	"github.com/geolens/geolens/internal/competitor"
-	"github.com/geolens/geolens/internal/delta"
-	"github.com/geolens/geolens/internal/governance"
-	"github.com/geolens/geolens/internal/growth"
-	"github.com/geolens/geolens/internal/monitor"
-	"github.com/geolens/geolens/internal/omnigraph"
-	"github.com/geolens/geolens/internal/storage"
+	"github.com/answerlens/answerlens/api/handlers"
+	"github.com/answerlens/answerlens/application"
+	"github.com/answerlens/answerlens/domain"
+	"github.com/answerlens/answerlens/internal/aimodel"
+	"github.com/answerlens/answerlens/internal/auth"
+	"github.com/answerlens/answerlens/internal/billing"
+	"github.com/answerlens/answerlens/internal/collector"
+	"github.com/answerlens/answerlens/internal/competitor"
+	"github.com/answerlens/answerlens/internal/customerfacing"
+	"github.com/answerlens/answerlens/internal/db"
+	"github.com/answerlens/answerlens/internal/delta"
+	"github.com/answerlens/answerlens/internal/governance"
+	"github.com/answerlens/answerlens/internal/growth"
+	"github.com/answerlens/answerlens/internal/monitor"
+	"github.com/answerlens/answerlens/internal/omnigraph"
+	"github.com/answerlens/answerlens/internal/storage"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -115,17 +117,32 @@ func main() {
 		log.Fatalf("Failed to seed demo account: %v", err)
 	}
 
+	// 第五批客户可见层：SQLite 迁移 + 独立 flag（CR-v1.1 决策 2/3）。
+	customerDB, err := db.Open(filepath.Join(filepath.Dir(dbPath), "customer_facing.db"))
+	if err != nil {
+		log.Fatalf("Failed to init customer-facing db: %v", err)
+	}
+	if err := customerDB.MigrateUp(); err != nil {
+		log.Fatalf("Failed to migrate customer-facing db: %v", err)
+	}
+	cfEnabled := os.Getenv("GEOLENS_FLAG_AEO_CUSTOMER_FACING_20261120") != "off"
+	customerFlag := customerfacing.NewFlag(cfEnabled)
+
 	mcpServer, agentToken := handlers.NewMCPRuntime(detectionSvc)
 	platform := &handlers.Platform{
-		Governance: governance.NewEngine(budgetLimit, nil),
-		Graph:      omnigraph.NewStore(nil),
-		Collector:  collector.NewFramework(collector.NewLocalSandbox(), nil),
-		MCP:        mcpServer,
-		Billing:    billing.NewEngine(billing.NewLocalGateway(0), nil),
-		Monitor:    monitor.NewEngine(nil),
-		Auth:       authEngine,
-		AdminToken: adminToken,
+		Governance:   governance.NewEngine(budgetLimit, nil),
+		Graph:        omnigraph.NewStore(nil),
+		Collector:    collector.NewFramework(collector.NewLocalSandbox(), nil),
+		MCP:          mcpServer,
+		Billing:      billing.NewEngine(billing.NewLocalGateway(0), nil),
+		Monitor:      monitor.NewEngine(nil),
+		Auth:         authEngine,
+		AdminToken:   adminToken,
+		CustomerDB:   customerDB,
+		CustomerFlag: customerFlag,
 	}
+	fmt.Printf("Customer-facing feature %s: on=%v (GEOLENS_FLAG_AEO_CUSTOMER_FACING_20261120=off 可秒级回滚)\n",
+		domain.CustomerFacingFeatureFlag, customerFlag.Enabled())
 	// Δ-01~Δ-07 增量批次运行时：阈值配置 / 采纳埋点 / 工具清单等落 delta.json。
 	deltaRuntime := delta.NewRuntime(filepath.Join(filepath.Dir(dbPath), "delta.json"))
 	handlers.SetDeltaRuntime(deltaRuntime)

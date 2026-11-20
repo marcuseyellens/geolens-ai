@@ -49,3 +49,11 @@ real_ui 比 api_sourced 更准
 综合可见度分
 综合 AI 分数
 综合指数
+
+# 客户可见版批次（ECF-01~16）追加项；原有条目全部保留
+visibility_index
+ai_attention_score（三态混排时）
+health_score（三态混排时）
+因为引用了.*所以会推荐
+去 Reddit 发帖就会被推荐
+一定提升

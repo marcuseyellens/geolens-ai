@@ -1,4 +1,4 @@
-# GeoLens AI
+# AnswerLens
 
 > 把「AI 回答里到底提了谁」做成可核验的证据，而不是一个主观分数。
 
@@ -11,7 +11,7 @@
 
 各端安装包见 [GitHub Releases](https://github.com/marcuseyellens/geolens-ai/releases)。
 
-GeoLens AI 是一个 AEO / GEO（Answer / Generative Engine Optimization）可见性检查与诊断平台。它读取公开页面、采集真实 buyer question 的模型回答，保留逐条原始答案与引用证据，输出**逐模型、逐意图**的指标与修复清单。
+AnswerLens 是一个 AEO / GEO（Answer / Generative Engine Optimization）可见性检查与诊断平台。它读取公开页面、采集真实 buyer question 的模型回答，保留逐条原始答案与引用证据，输出**逐模型、逐意图**的指标与修复清单。
 
 本项目刻意不提供「综合分」，也不承诺任何模型的收录、推荐、排名或转化结果。**技术就绪 ≠ 被推荐**：所有分数只描述可观测的技术条件与回答内容。
 

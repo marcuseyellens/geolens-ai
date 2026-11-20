@@ -3,7 +3,7 @@ package delta
 import (
 	"strings"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 // ---- EX-06 独立参考区（D-2 / 契约 10）----

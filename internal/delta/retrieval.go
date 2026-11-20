@@ -4,7 +4,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 // ---- EX-02 retrieval_locale 判定器（D-1 定稿）----

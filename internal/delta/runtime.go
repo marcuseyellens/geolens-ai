@@ -3,7 +3,7 @@ package delta
 import (
 	"sync"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 // Runtime 聚合 Δ 批次全部运行时状态，作为 HTTP 层与 CI 断言的统一入口。

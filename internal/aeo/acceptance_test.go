@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 // 本文件把《WBS_AEO_Feature_Extraction_v1.0》§8 的 10 条增量发布验收清单

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 // ---- A-WP-9.4 / §8 增量发布验收清单的运行时求值 ----

@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/geolens/geolens/domain"
-	"github.com/geolens/geolens/internal/delta"
+	"github.com/answerlens/answerlens/domain"
+	"github.com/answerlens/answerlens/internal/delta"
 )
 
 // ---- §7 CI 追加项：作为既有 A-WP-1.5 / 执行规格 §6 通道的规则输入追加 ----

@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/geolens/geolens/application"
-	"github.com/geolens/geolens/domain"
-	"github.com/geolens/geolens/internal/mcpserver"
+	"github.com/answerlens/answerlens/application"
+	"github.com/answerlens/answerlens/domain"
+	"github.com/answerlens/answerlens/internal/mcpserver"
 )
 
 // NewMCPRuntime 组装 MCP server：只读 token 注册表 + 真实数据源适配器。

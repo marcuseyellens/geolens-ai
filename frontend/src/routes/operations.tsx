@@ -50,7 +50,7 @@ export default function OperationsPage() {
     const id = `batch/${Date.now()}`;
     await api.graphCreateBranch(id, "collector");
     await api.graphWriteNode(id, "collector", {
-      id: `brand:${Date.now()}`, kind: "Brand", label: "GeoLens AEO 平台",
+      id: `brand:${Date.now()}`, kind: "Brand", label: "AnswerLens AEO 平台",
       props: { category: "AEO 平台" },
     });
     await api.graphMerge(id, "reviewer");

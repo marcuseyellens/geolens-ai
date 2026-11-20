@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 // ---- A-WP-3.2 / 3.3 分任务阈值（不用统一 cutoff）与 suspect 状态 ----

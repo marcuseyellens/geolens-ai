@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 func fixedClock(t time.Time) Clock { return func() time.Time { return t } }

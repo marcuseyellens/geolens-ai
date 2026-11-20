@@ -24,6 +24,12 @@ jobs:
         run: go test ./internal/billing/... ./api/handlers/... -run 'TestProvider|TestAirwallex|TestPayPal|TestHosted|TestPayment|TestCheckout' -v
       - name: 竞品批次回归（TC-C-01~14 / 五处输出面禁令 / 采样分母正交 / flag 正交）
         run: go test ./internal/competitor/... -run 'TestTCC' -v
+      - name: 客户可见版回归（TC-F-22/23/8/2/7 / 禁词 / 状态机 / 只读 SQL / 三态 / flag 正交）
+        run: go test ./internal/customerfacing/... -run 'TestTCF' -v
+      - name: 客户可见版端点与导航（TC-F-01/02/12 / flag off 404 / 六口径 / 固定文案）
+        run: go test ./api/handlers/... -run 'TestCustomerFacing|TestAttributionMethodsSix|TestFixedNotices' -v
+      - name: SQLite 迁移回滚演练（TC-F-24 / 幂等 / 空启动 / 导航守卫）
+        run: go test ./internal/db/... -v
       - name: 后端构建
         run: go build ./...
 

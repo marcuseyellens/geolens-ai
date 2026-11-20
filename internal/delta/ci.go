@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 // ---- EX-14 三级证据标记 [事实]/[观察]/[推导] + 排除项清单 ----

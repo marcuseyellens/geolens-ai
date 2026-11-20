@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 // ---- A-WP-1.5 / A-WP-2 专属验收：中立性声明与全站禁词 CI ----

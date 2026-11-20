@@ -5,11 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/geolens/geolens/domain"
-	"github.com/geolens/geolens/internal/billing"
-	"github.com/geolens/geolens/internal/governance"
-	"github.com/geolens/geolens/internal/monitor"
-	"github.com/geolens/geolens/internal/siteaudit"
+	"github.com/answerlens/answerlens/domain"
+	"github.com/answerlens/answerlens/internal/billing"
+	"github.com/answerlens/answerlens/internal/governance"
+	"github.com/answerlens/answerlens/internal/monitor"
+	"github.com/answerlens/answerlens/internal/siteaudit"
 )
 
 // offlineFetcher 让 L0 站点检查完全离线可跑。

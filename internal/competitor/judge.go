@@ -5,7 +5,7 @@ import (
 	"net"
 	"sort"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 func errInvalid(field, detail string) error {

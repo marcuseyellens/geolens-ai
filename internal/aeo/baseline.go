@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 // ---- A-WP-6.1 8 周滚动基线 ----

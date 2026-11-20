@@ -6,17 +6,19 @@ import (
 	"os"
 	"strings"
 
-	"github.com/geolens/geolens/application"
-	"github.com/geolens/geolens/domain"
-	"github.com/geolens/geolens/internal/aimodel"
-	"github.com/geolens/geolens/internal/auth"
-	"github.com/geolens/geolens/internal/billing"
-	"github.com/geolens/geolens/internal/collector"
-	"github.com/geolens/geolens/internal/governance"
-	"github.com/geolens/geolens/internal/growth"
-	"github.com/geolens/geolens/internal/mcpserver"
-	"github.com/geolens/geolens/internal/monitor"
-	"github.com/geolens/geolens/internal/omnigraph"
+	"github.com/answerlens/answerlens/application"
+	"github.com/answerlens/answerlens/domain"
+	"github.com/answerlens/answerlens/internal/aimodel"
+	"github.com/answerlens/answerlens/internal/auth"
+	"github.com/answerlens/answerlens/internal/billing"
+	"github.com/answerlens/answerlens/internal/collector"
+	"github.com/answerlens/answerlens/internal/customerfacing"
+	"github.com/answerlens/answerlens/internal/db"
+	"github.com/answerlens/answerlens/internal/governance"
+	"github.com/answerlens/answerlens/internal/growth"
+	"github.com/answerlens/answerlens/internal/mcpserver"
+	"github.com/answerlens/answerlens/internal/monitor"
+	"github.com/answerlens/answerlens/internal/omnigraph"
 	"github.com/gin-gonic/gin"
 )
 
@@ -32,23 +34,28 @@ type Platform struct {
 	AdminToken string
 	// Payments 可选注入；为空时 NewServer 从环境变量装配（凭证缺失只有演示网关）。
 	Payments *billing.ProviderRegistry
+	// CustomerDB / CustomerFlag 为第五批客户可见层依赖（CR-v1.1 决策 2/3）。
+	CustomerDB   *db.DB
+	CustomerFlag *customerfacing.Flag
 }
 
 // Server 持有所有 handler 依赖
 type Server struct {
-	detection  *application.DetectionService
-	engine     *aimodel.Engine
-	growth     *growth.Store
-	platform   *Platform
-	mcp        *mcpserver.Server
-	auth       *auth.Engine
-	adminToken string
-	billing    *billing.Engine
-	monitor    *monitor.Engine
-	governance *governance.Engine
-	graph      *omnigraph.Store
-	collector  *collector.Framework
-	payments   *billing.ProviderRegistry
+	detection    *application.DetectionService
+	engine       *aimodel.Engine
+	growth       *growth.Store
+	platform     *Platform
+	mcp          *mcpserver.Server
+	auth         *auth.Engine
+	adminToken   string
+	billing      *billing.Engine
+	monitor      *monitor.Engine
+	governance   *governance.Engine
+	graph        *omnigraph.Store
+	collector    *collector.Framework
+	payments     *billing.ProviderRegistry
+	customerDB   *db.DB
+	customerFlag *customerfacing.Flag
 }
 
 // NewServer 创建 API server。platform 为 nil 时保持旧行为（仅 WP-6 + 增量 WBS 端点）。
@@ -69,6 +76,8 @@ func NewServer(detection *application.DetectionService, engine *aimodel.Engine, 
 		if p.Payments != nil {
 			s.payments = p.Payments
 		}
+		s.customerDB = p.CustomerDB
+		s.customerFlag = p.CustomerFlag
 	}
 	return s
 }
@@ -143,6 +152,9 @@ func (s *Server) RegisterRoutes(r *gin.Engine) {
 
 	// 第三批次 CF-01~CF-08 / §3.1 端点（独立 flag，与 Δ 批次正交）。
 	s.registerCompetitorRoutes(protected, admin, r)
+
+	// 第五批客户可见层端点（独立 flag，与前三 flag 正交；off 时不注册）。
+	s.registerCustomerFacingRoutes(r)
 }
 
 // ---- Brand handlers ----

@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 // ---- feature flag（§7 上线 / 回滚总开关）----

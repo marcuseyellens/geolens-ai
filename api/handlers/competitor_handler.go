@@ -3,8 +3,8 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/geolens/geolens/domain"
-	"github.com/geolens/geolens/internal/competitor"
+	"github.com/answerlens/answerlens/domain"
+	"github.com/answerlens/answerlens/internal/competitor"
 	"github.com/gin-gonic/gin"
 )
 

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 // ---- A-WP-1.1 / 1.2 三方一致性比对 ----

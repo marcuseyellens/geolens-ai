@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/geolens/geolens/domain"
-	"github.com/geolens/geolens/internal/aeo"
+	"github.com/answerlens/answerlens/domain"
+	"github.com/answerlens/answerlens/internal/aeo"
 )
 
 // fakeSandbox 是可注入的本地沙箱实现。failEvery 让确定比例的采集失败，

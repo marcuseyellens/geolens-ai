@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 // ---- A-WP-4.1 agent_readability 检查组 ----

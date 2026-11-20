@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 // ---- EX-13 fix_artifact_event 采纳埋点 + 留存统计 ----

@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 // ---- A-WP-7.1 六要素输入与意图分层 ----

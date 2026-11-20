@@ -15,8 +15,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/geolens/geolens/domain"
-	"github.com/geolens/geolens/internal/aeo"
+	"github.com/answerlens/answerlens/domain"
+	"github.com/answerlens/answerlens/internal/aeo"
 	"github.com/google/uuid"
 )
 

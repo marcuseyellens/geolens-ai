@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 func ans(runID, questionID string, p domain.AIModelID) domain.RunAnswer {

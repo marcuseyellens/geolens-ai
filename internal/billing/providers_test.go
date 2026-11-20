@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 func testOrder() domain.Order {

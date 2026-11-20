@@ -354,7 +354,7 @@ export default function SubscribePage() {
                   <LockKeyhole className="h-4 w-4 mt-0.5 shrink-0 text-accent" />
                   <p className="text-xs text-ink-muted leading-relaxed">
                     {chosenProvider?.live
-                      ? "付款在第三方安全页面完成，GeoLens 不接触您的银行卡信息。付款结果由供应商回调确认。"
+                      ? "付款在第三方安全页面完成，AnswerLens 不接触您的银行卡信息。付款结果由供应商回调确认。"
                       : "演示收银台会立即开通套餐，不会跳转第三方页面，也不会产生真实扣款。"}
                   </p>
                 </div>

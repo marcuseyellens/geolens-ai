@@ -26,6 +26,7 @@ export const LOCALES: LocaleMeta[] = [
 
 export const EXTRA: Record<string, Record<string, string>> = {
   "zh-Hant": {
+    "使用手册": "使用手冊",
     "进入控制台": "進入控制台", "查看套餐": "查看方案", "免费检查网站": "免費檢查網站",
     "语言": "語言", "订阅与开通": "訂閱與開通",
     "看看 AI 回答里有没有你": "看看 AI 回答裡有沒有你",

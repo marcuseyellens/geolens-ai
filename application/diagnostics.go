@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/geolens/geolens/domain"
-	"github.com/geolens/geolens/internal/metrics"
-	"github.com/geolens/geolens/internal/siteaudit"
+	"github.com/answerlens/answerlens/domain"
+	"github.com/answerlens/answerlens/internal/metrics"
+	"github.com/answerlens/answerlens/internal/siteaudit"
 )
 
 var linkRE = regexp.MustCompile(`https?://[^\s)"'<>\]]+`)

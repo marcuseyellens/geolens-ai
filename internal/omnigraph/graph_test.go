@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 func clockAt(t time.Time) func() time.Time { return func() time.Time { return t } }

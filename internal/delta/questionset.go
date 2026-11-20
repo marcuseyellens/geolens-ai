@@ -6,8 +6,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/geolens/geolens/domain"
-	"github.com/geolens/geolens/internal/aeo"
+	"github.com/answerlens/answerlens/domain"
+	"github.com/answerlens/answerlens/internal/aeo"
 )
 
 // ---- EX-03 分语言问题集生成与配额（D-6）----

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/geolens/geolens/internal/delta"
+	"github.com/answerlens/answerlens/internal/delta"
 	"github.com/gin-gonic/gin"
 )
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 func joinKeywords(words []string) string {

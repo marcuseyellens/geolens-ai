@@ -36,7 +36,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
               <Radar className="h-4 w-4 text-white" />
             </span>
             <span className="font-bold text-ink tracking-tight">
-              GeoLens <span className="text-accent">AI</span>
+              AnswerLens <span className="text-accent">AI</span>
             </span>
           </Link>
 
@@ -82,7 +82,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
               <span className="flex items-center justify-center h-7 w-7 rounded-ds-sm bg-[image:var(--ds-gradient-tech)]">
                 <Radar className="h-4 w-4 text-white" />
               </span>
-              <span className="font-bold text-ink">GeoLens <span className="text-accent">AI</span></span>
+              <span className="font-bold text-ink">AnswerLens <span className="text-accent">AI</span></span>
             </div>
             <p className="mt-3 text-sm text-ink-muted max-w-sm">
               面向 AEO 的 AI 可见性检查：先看清 AI 现在推荐谁，再决定改什么。
@@ -113,7 +113,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
         </div>
         <div className="border-t border-edge">
           <div className="mx-auto max-w-6xl px-6 py-4 flex flex-col sm:flex-row justify-between gap-2 text-xs text-ink-subtle">
-            <span>© 2026 GeoLens AI. 保留所有权利。</span>
+            <span>© 2026 AnswerLens. 保留所有权利。</span>
             <span>结果基于公开页面技术条件，不构成对 AI 推荐结果的因果承诺。</span>
           </div>
         </div>

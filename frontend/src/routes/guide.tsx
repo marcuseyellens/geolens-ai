@@ -28,7 +28,7 @@ const sections: Section[] = [
     body: (
       <div className="space-y-3 text-sm text-ink-muted">
         <p>
-          GeoLens AI 把「AI 回答里到底提了谁」做成可核验的证据，而不是一个主观分数。
+          AnswerLens 把「AI 回答里到底提了谁」做成可核验的证据，而不是一个主观分数。
           所有入口共用同一账户与套餐，口径一致。
         </p>
         <div className="grid gap-2 sm:grid-cols-2">

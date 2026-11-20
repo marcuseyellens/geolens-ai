@@ -3,7 +3,7 @@ package application
 import (
 	"context"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 // BrandRepository 品牌仓储接口

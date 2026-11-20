@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 // ---- EX-09 ToolManifest 版本表 + tools/list 固定包装（M6 后小版本）----

@@ -17,7 +17,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 // 海外收款：Airwallex（空中云汇）与 PayPal 走宿主收银台，供应商回调验签后

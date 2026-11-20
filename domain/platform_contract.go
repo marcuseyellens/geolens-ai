@@ -119,6 +119,7 @@ type Entitlement struct {
 	Plan             PlanID  `json:"plan"`
 	DailyQueries     int     `json:"daily_queries"` // 0 表示不适用
 	MonthlyRuns      int     `json:"monthly_runs"`  // 0 表示不适用
+	PromptQuota      int     `json:"prompt_quota"`  // CR-v1.1 决策 4：50/300/700 prompt 档位
 	Projects         int     `json:"projects"`
 	OneTimeQuestions int     `json:"one_time_questions"` // $39 报告题数
 	MCPEnabled       bool    `json:"mcp_enabled"`
@@ -128,14 +129,15 @@ type Entitlement struct {
 	PriceUSD         float64 `json:"price_usd"`
 }
 
-// DefaultEntitlements 严格对应 WBS §3.7 套餐矩阵（价格与 PlanPrices 一致）。
+// DefaultEntitlements 对应 WBS §3.7 套餐矩阵；价格沿用现价（CR-v1.1 决策 4：不改价）。
+// MonthlyRuns 保留作为内部执行配额，PromptQuota 是客户可见的 prompt 额度档位。
 var DefaultEntitlements = map[PlanID]Entitlement{
 	PlanFree:    {Plan: PlanFree, DailyQueries: 5, PriceUSD: 0},
 	PlanOneTime: {Plan: PlanOneTime, OneTimeQuestions: 30, PriceUSD: 39},
 	PlanRescan:  {Plan: PlanRescan, PriceUSD: 19},
-	PlanStarter: {Plan: PlanStarter, MonthlyRuns: 1500, Projects: 1, PriceUSD: 49},
-	PlanGrowth:  {Plan: PlanGrowth, MonthlyRuns: 9000, Projects: 2, MCPEnabled: true, APIEnabled: true, AlertsEnabled: true, CustomExport: true, PriceUSD: 199},
-	PlanScale:   {Plan: PlanScale, MonthlyRuns: 21000, Projects: 5, MCPEnabled: true, APIEnabled: true, AlertsEnabled: true, CustomExport: true, PriceUSD: 410},
+	PlanStarter: {Plan: PlanStarter, MonthlyRuns: 1500, PromptQuota: 50, Projects: 1, PriceUSD: 49},
+	PlanGrowth:  {Plan: PlanGrowth, MonthlyRuns: 9000, PromptQuota: 300, Projects: 2, MCPEnabled: true, APIEnabled: true, AlertsEnabled: true, CustomExport: true, PriceUSD: 199},
+	PlanScale:   {Plan: PlanScale, MonthlyRuns: 21000, PromptQuota: 700, Projects: 5, MCPEnabled: true, APIEnabled: true, AlertsEnabled: true, CustomExport: true, PriceUSD: 410},
 }
 
 // QuotaUsage 是配额余量；失败运行口径与五元组一致（失败运行不计）。

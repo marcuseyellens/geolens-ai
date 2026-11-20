@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/geolens/geolens/domain"
-	"github.com/geolens/geolens/internal/mcpserver"
+	"github.com/answerlens/answerlens/domain"
+	"github.com/answerlens/answerlens/internal/mcpserver"
 	"github.com/gin-gonic/gin"
 )
 

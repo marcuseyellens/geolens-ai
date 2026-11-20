@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 func rpc(t *testing.T, s *Server, token, method string, params any) Response {

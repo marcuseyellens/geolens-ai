@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 	"github.com/google/uuid"
 )
 

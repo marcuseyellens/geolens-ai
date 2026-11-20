@@ -1,4 +1,6 @@
+import { useState, useEffect } from "react";
 import { Routes, Route, Link, useLocation, useNavigate, Navigate } from "react-router-dom";
+import { api } from "./api";
 import {
   LayoutDashboard,
   Crosshair,
@@ -43,6 +45,11 @@ import LoginPage from "./routes/login";
 import SubscribePage from "./routes/subscribe";
 import CompetitorPage from "./routes/competitor-page";
 import GuidePage from "./routes/guide";
+import {
+  MarketBaselinePage, BrandVisibilityPage, AttributionDeskPage, AgentConsolePage,
+  AdsWorkbenchPage, FinanceCopilotPage, CompetitorMonitorPage, FactLibraryPage,
+  AccountPlansPage,
+} from "./routes/customer-pages";
 
 const navItems = [
   { path: "/app", label: "概览", icon: LayoutDashboard },
@@ -57,6 +64,31 @@ const navItems = [
   { path: "/app/mcp", label: "MCP 接入", icon: Plug },
   { path: "/app/settings", label: "设置", icon: Settings },
 ];
+
+/** ECF-01：客户可见导航从 GET /nav 读取，前端不硬编码这 9 项。 */
+function CustomerNav() {
+  const [items, setItems] = useState<Array<{ nav_key: string; label: string; route_path: string }>>([]);
+  useEffect(() => {
+    api.getJson<Array<{ nav_key: string; label: string; route_path: string }>>("/nav")
+      .then((data) => setItems(Array.isArray(data) ? data : []))
+      .catch(() => setItems([]));
+  }, []);
+  if (items.length === 0) return null;
+  return (
+    <div className="px-3 pt-3 mt-2 border-t border-edge">
+      <p className="px-3 pb-1 text-[10px] uppercase tracking-wider text-ink-subtle">客户视图</p>
+      {items.map((n) => (
+        <Link
+          key={n.nav_key}
+          to={`/app${n.route_path.replace(/^\/app/, "").replace(/:[^/]+/g, "demo")}`}
+          className="flex items-center gap-2.5 px-3 py-1.5 rounded-ds text-xs text-ink-muted hover:text-ink hover:bg-canvas"
+        >
+          {n.label}
+        </Link>
+      ))}
+    </div>
+  );
+}
 
 /** 控制台外壳：侧边栏 + 内部路由。 */
 function AppShell() {
@@ -83,7 +115,7 @@ function AppShell() {
             <div className="absolute inset-0 rounded-ds-sm bg-[image:var(--ds-gradient-tech)] opacity-40 blur-sm -z-10" />
           </div>
           <div>
-            <span className="font-bold text-ink tracking-tight">GeoLens</span>
+            <span className="font-bold text-ink tracking-tight">AnswerLens</span>
             <span className="text-xs font-medium text-accent ml-1">AI</span>
           </div>
         </Link>
@@ -115,6 +147,8 @@ function AppShell() {
             );
           })}
         </nav>
+
+        <CustomerNav />
 
         <div className="px-3 py-3 border-t border-edge space-y-1">
           {user && (
@@ -167,6 +201,15 @@ function AppShell() {
           <Route path="competitor" element={<CompetitorPage />} />
           <Route path="operations" element={<OperationsPage />} />
           <Route path="mcp" element={<MCPDocsPage />} />
+          <Route path="market" element={<MarketBaselinePage />} />
+          <Route path="brand/:brandId" element={<BrandVisibilityPage />} />
+          <Route path="attribution" element={<AttributionDeskPage />} />
+          <Route path="agents" element={<AgentConsolePage />} />
+          <Route path="ads" element={<AdsWorkbenchPage />} />
+          <Route path="finance" element={<FinanceCopilotPage />} />
+          <Route path="competitors" element={<CompetitorMonitorPage />} />
+          <Route path="facts" element={<FactLibraryPage />} />
+          <Route path="account" element={<AccountPlansPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/app" replace />} />
         </Routes>

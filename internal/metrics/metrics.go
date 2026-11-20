@@ -7,7 +7,7 @@ package metrics
 import (
 	"sort"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 // Filter 决定哪些答案进入一个指标集合。BrandCheck 为 nil 表示不按该维度过滤。

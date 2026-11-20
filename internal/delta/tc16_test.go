@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 // TC-16 系列对应《CodeBuddy 执行规格书｜2026-11-16》§5 自动用例。

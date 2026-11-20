@@ -85,9 +85,9 @@ export default function SettingsPage() {
       </Card>
 
       <Card className="mt-6">
-        <h3 className="text-base font-medium text-ink mb-3">关于 GeoLens AI</h3>
+        <h3 className="text-base font-medium text-ink mb-3">关于 AnswerLens</h3>
         <p className="text-sm text-ink-muted">
-          GeoLens AI 是一个 AEO/GEO（AI Engine Optimization）平台，帮助你监测和优化品牌在大语言模型中的推荐表现。
+          AnswerLens 是一个 AEO/GEO（AI Engine Optimization）平台，帮助你监测和优化品牌在大语言模型中的推荐表现。
         </p>
         <p className="text-sm text-ink-muted mt-2">
           检测维度包括：品牌是否被提及、提及位置、情感倾向、竞品提及情况，并生成综合 AEO 得分。

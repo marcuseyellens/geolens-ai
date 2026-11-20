@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 // Sources 是五块看板的输入快照，由 handlers 层从各运行时实例采集后填入。

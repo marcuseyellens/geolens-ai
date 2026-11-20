@@ -3,7 +3,7 @@ package aeo
 import (
 	"strings"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 // ---- A-WP-2.4 固定样本集 ----

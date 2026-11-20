@@ -65,16 +65,16 @@ const ONE_TIME = [
 
 const TIERS = [
   {
-    name: "Starter", plan: "starter", price: "$49", projects: "1 个项目", quota: "1,500 次 / 月",
+    name: "Starter", plan: "starter", price: "$49", projects: "1 个项目", quota: "50 prompt / 月",
     features: ["按意图持续跑题", "证据下钻与指标看板", "基础导出", "—", "—"],
   },
   {
-    name: "Growth", plan: "growth", price: "$199", projects: "2 个项目", quota: "9,000 次 / 月",
+    name: "Growth", plan: "growth", price: "$199", projects: "2 个项目", quota: "300 prompt / 月",
     features: ["按意图持续跑题", "证据下钻与指标看板", "自定义导出", "MCP / API 接入", "告警与复扫对比"],
     highlight: true,
   },
   {
-    name: "Scale", plan: "scale", price: "$410", projects: "5 个项目", quota: "21,000 次 / 月",
+    name: "Scale", plan: "scale", price: "$410", projects: "5 个项目", quota: "700 prompt / 月",
     features: ["按意图持续跑题", "证据下钻与指标看板", "自定义导出", "MCP / API 接入", "告警与复扫对比 + 优先支持"],
   },
 ];

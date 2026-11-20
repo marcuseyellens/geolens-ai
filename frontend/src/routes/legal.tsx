@@ -9,7 +9,7 @@ const CONTENT = {
     title: "隐私政策",
     updated: "最后更新：2026-11-14",
     icon: <ShieldCheck className="h-5 w-5" />,
-    intro: "GeoLens AI 遵循数据最小化原则。我们只保留提供服务所必需的数据，不出售、不共享给广告网络。",
+    intro: "AnswerLens 遵循数据最小化原则。我们只保留提供服务所必需的数据，不出售、不共享给广告网络。",
     sections: [
       {
         h: "1. 我们收集什么",
@@ -52,12 +52,12 @@ const CONTENT = {
     title: "服务条款",
     updated: "最后更新：2026-11-14",
     icon: <FileText className="h-5 w-5" />,
-    intro: "使用 GeoLens AI 即表示你理解本服务的性质：我们提供可核验的事实与证据，不承诺结果。",
+    intro: "使用 AnswerLens 即表示你理解本服务的性质：我们提供可核验的事实与证据，不承诺结果。",
     sections: [
       {
         h: "1. 服务性质",
         p: [
-          "GeoLens AI 是面向 AEO（Answer Engine Optimization）的可见性检查与诊断服务，输出站点就绪度、真实 AI 回答证据、逐模型与逐意图指标、修复清单与修复件。",
+          "AnswerLens 是面向 AEO（Answer Engine Optimization）的可见性检查与诊断服务，输出站点就绪度、真实 AI 回答证据、逐模型与逐意图指标、修复清单与修复件。",
           "技术就绪 ≠ 被推荐。所有分数与指标只描述可观测的技术条件与回答内容，不构成对任何 AI 模型推荐结果、排名、流量或转化的因果承诺。",
         ],
       },

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/geolens/geolens/domain"
-	"github.com/geolens/geolens/internal/siteaudit"
+	"github.com/answerlens/answerlens/domain"
+	"github.com/answerlens/answerlens/internal/siteaudit"
 )
 
 // staticFetcher 把前端构建输入当作线上响应返回，让自举断言既不依赖网络，

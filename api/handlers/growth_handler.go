@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/geolens/geolens/internal/growth"
+	"github.com/answerlens/answerlens/internal/growth"
 	"github.com/gin-gonic/gin"
 )
 

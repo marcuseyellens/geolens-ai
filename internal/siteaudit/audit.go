@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/geolens/geolens/domain"
-	"github.com/geolens/geolens/internal/aeo"
+	"github.com/answerlens/answerlens/domain"
+	"github.com/answerlens/answerlens/internal/aeo"
 )
 
 // FetchResult 是一次页面抓取的原始证据。

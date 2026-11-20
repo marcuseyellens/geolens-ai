@@ -3,7 +3,7 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/geolens/geolens/internal/siteaudit"
+	"github.com/answerlens/answerlens/internal/siteaudit"
 	"github.com/gin-gonic/gin"
 )
 

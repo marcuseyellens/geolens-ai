@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 
-	"github.com/geolens/geolens/application"
-	"github.com/geolens/geolens/domain"
-	"github.com/geolens/geolens/internal/storage"
+	"github.com/answerlens/answerlens/application"
+	"github.com/answerlens/answerlens/domain"
+	"github.com/answerlens/answerlens/internal/storage"
 )
 
 // brandRepoAdapter 适配 storage.Store 到 application.BrandRepository

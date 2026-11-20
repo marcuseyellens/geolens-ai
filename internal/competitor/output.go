@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 // 本文件是 §3.2 / EC-08 要求覆盖的五个输出面：

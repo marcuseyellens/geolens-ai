@@ -16,8 +16,8 @@ const ROWS: { label: string; geolens: string; manual: string; seo: string }[] = 
 
 const FAQ = [
   {
-    q: "GeoLens AI 和通用 SEO 工具冲突吗？",
-    a: "不冲突，两者度量对象不同。SEO 工具关注搜索结果页的排名与关键词；GeoLens 关注 AI 生成式回答里是否出现你的品牌、位置与引用来源。可以并用。",
+    q: "AnswerLens 和通用 SEO 工具冲突吗？",
+    a: "不冲突，两者度量对象不同。SEO 工具关注搜索结果页的排名与关键词；AnswerLens 关注 AI 生成式回答里是否出现你的品牌、位置与引用来源。可以并用。",
   },
   {
     q: "为什么不用「综合分」？",
@@ -48,7 +48,7 @@ export default function ComparePage() {
           <thead>
             <tr>
               <th className="text-left p-4 font-medium text-ink-muted border-b border-edge w-[170px]">能力</th>
-              <th className="p-4 text-center border-b border-edge bg-accent-subtle rounded-t-ds text-ink font-semibold">GeoLens AI</th>
+              <th className="p-4 text-center border-b border-edge bg-accent-subtle rounded-t-ds text-ink font-semibold">AnswerLens</th>
               <th className="p-4 text-center border-b border-edge text-ink font-medium">手工自查</th>
               <th className="p-4 text-center border-b border-edge text-ink font-medium">通用 SEO 工具</th>
             </tr>
@@ -74,7 +74,7 @@ export default function ComparePage() {
 
       <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-8">
         <Card>
-          <h2 className="text-base font-semibold text-ink">什么时候选 GeoLens AI</h2>
+          <h2 className="text-base font-semibold text-ink">什么时候选 AnswerLens</h2>
           <ul className="mt-4 space-y-2.5">
             {[
               "你需要知道 AI 回答里到底提了谁、引用了哪个域名",

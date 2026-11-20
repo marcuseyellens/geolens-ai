@@ -4,7 +4,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/geolens/geolens/domain"
+	"github.com/answerlens/answerlens/domain"
 )
 
 // ---- A-WP-5.1 / 5.2 / 5.3 引用经济属性与来源基线 ----

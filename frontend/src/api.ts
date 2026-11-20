@@ -44,6 +44,9 @@ async function req<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  // ---- 第五批客户可见端点（通用只读 GET）----
+  getJson: <T = unknown>(path: string) => req<T>(path),
+
   // ---- 会话 ----
   login: (email: string, password: string) =>
     req<AuthResponse>("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }),

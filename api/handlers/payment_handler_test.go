@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/geolens/geolens/internal/auth"
-	"github.com/geolens/geolens/internal/billing"
+	"github.com/answerlens/answerlens/internal/auth"
+	"github.com/answerlens/answerlens/internal/billing"
 	"github.com/gin-gonic/gin"
 )
 

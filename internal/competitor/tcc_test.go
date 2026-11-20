@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/geolens/geolens/domain"
-	"github.com/geolens/geolens/internal/delta"
+	"github.com/answerlens/answerlens/domain"
+	"github.com/answerlens/answerlens/internal/delta"
 )
 
 func repoRoot() string {
