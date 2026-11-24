@@ -9,6 +9,8 @@ export interface FigureProps {
   label: string;
   value: number | string;
   sourceRef?: string;
+  /** EXD-01：溯源到原始 AI 答案快照 ID（DC-1）。可选，向后兼容第五批调用。 */
+  answerRef?: string;
   figureStatus?: string;
   methodologyVersion?: string;
   figureCheckFlag?: boolean;
@@ -92,11 +94,12 @@ export function TriStateCards({
 
 /** SourcePeek：就地来源卡，不跳独立页。原文 + citation + URL + 算法 + 固定 notice。 */
 export function SourcePeek({
-  verbatim, citation, url, algorithm, methodologyVersion, onClose,
+  verbatim, citation, url, algorithm, methodologyVersion, answerRef, onClose,
 }: {
   verbatim: string; citation: string; url: string; algorithm: string;
-  methodologyVersion: string; onClose: () => void;
+  methodologyVersion: string; answerRef?: string; onClose: () => void;
 }) {
+  const blocked = !answerRef;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4" onClick={onClose}>
       <Card className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
@@ -104,12 +107,19 @@ export function SourcePeek({
           <h3 className="font-semibold text-ink">来源明细</h3>
           <button className="text-sm text-ink-muted hover:text-ink" onClick={onClose}>收起</button>
         </div>
-        <blockquote className="mt-3 border-l-2 border-accent pl-3 text-sm text-ink">“{verbatim}”</blockquote>
-        <div className="mt-3 space-y-1 text-xs text-ink-muted">
-          <div>引用：{citation}</div>
-          <div>链接：{url}</div>
-          <div>算法：{algorithm} · 口径 {methodologyVersion}</div>
-        </div>
+        {blocked ? (
+          <Callout tone="warn">无原始答案来源，该数字已阻断，不进入报告</Callout>
+        ) : (
+          <>
+            <blockquote className="mt-3 border-l-2 border-accent pl-3 text-sm text-ink">“{verbatim}”</blockquote>
+            <div className="mt-3 space-y-1 text-xs text-ink-muted">
+              <div>引用：{citation}</div>
+              <div>链接：{url}</div>
+              <div>原始答案：{answerRef}</div>
+              <div>算法：{algorithm} · 口径 {methodologyVersion}</div>
+            </div>
+          </>
+        )}
         <p className="mt-3 text-xs text-ink-subtle">引用与提名仅为观测，引用不等于答案依据。</p>
       </Card>
     </div>

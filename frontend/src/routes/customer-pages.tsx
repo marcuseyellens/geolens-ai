@@ -103,6 +103,7 @@ export function BrandVisibilityPage() {
         <SourcePeek
           verbatim="暂无原文证据（新表空启动）"
           citation="—" url="—" algorithm="三态判定" methodologyVersion="1.3"
+          answerRef="demo://no-source-yet"
           onClose={() => setPeek(null)}
         />
       )}

@@ -23,6 +23,7 @@ import (
 	"github.com/answerlens/answerlens/internal/growth"
 	"github.com/answerlens/answerlens/internal/monitor"
 	"github.com/answerlens/answerlens/internal/omnigraph"
+	"github.com/answerlens/answerlens/internal/sevenproducts"
 	"github.com/answerlens/answerlens/internal/storage"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -143,6 +144,20 @@ func main() {
 	}
 	fmt.Printf("Customer-facing feature %s: on=%v (GEOLENS_FLAG_AEO_CUSTOMER_FACING_20261120=off 可秒级回滚)\n",
 		domain.CustomerFacingFeatureFlag, customerFlag.Enabled())
+
+	// 第六批七款新品能力：独立 SQLite 表 + 独立 flag（与前五 flag 正交）。
+	sevenDB, err := db.Open(filepath.Join(filepath.Dir(dbPath), "seven_products.db"))
+	if err != nil {
+		log.Fatalf("Failed to init seven-products db: %v", err)
+	}
+	if err := sevenDB.MigrateUpSeven(); err != nil {
+		log.Fatalf("Failed to migrate seven-products db: %v", err)
+	}
+	sevenEnabled := os.Getenv("GEOLENS_FLAG_AEO_SEVEN_PRODUCTS_20261123") != "off"
+	sevenFlag := sevenproducts.NewFlag(sevenEnabled)
+	handlers.SetSevenProductsRuntime(sevenDB, sevenFlag)
+	fmt.Printf("Seven-products feature %s: on=%v (GEOLENS_FLAG_AEO_SEVEN_PRODUCTS_20261123=off 可秒级回滚)\n",
+		domain.SevenProductsFeatureFlag, sevenFlag.Enabled())
 	// Δ-01~Δ-07 增量批次运行时：阈值配置 / 采纳埋点 / 工具清单等落 delta.json。
 	deltaRuntime := delta.NewRuntime(filepath.Join(filepath.Dir(dbPath), "delta.json"))
 	handlers.SetDeltaRuntime(deltaRuntime)

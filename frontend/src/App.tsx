@@ -50,6 +50,7 @@ import {
   AdsWorkbenchPage, FinanceCopilotPage, CompetitorMonitorPage, FactLibraryPage,
   AccountPlansPage,
 } from "./routes/customer-pages";
+import { AgentBuilderPage, RunReplayPage } from "./routes/seven-products-pages";
 
 const navItems = [
   { path: "/app", label: "概览", icon: LayoutDashboard },
@@ -205,6 +206,8 @@ function AppShell() {
           <Route path="brand/:brandId" element={<BrandVisibilityPage />} />
           <Route path="attribution" element={<AttributionDeskPage />} />
           <Route path="agents" element={<AgentConsolePage />} />
+          <Route path="agents/builder/:id" element={<AgentBuilderPage />} />
+          <Route path="agents/runs/:execId" element={<RunReplayPage />} />
           <Route path="ads" element={<AdsWorkbenchPage />} />
           <Route path="finance" element={<FinanceCopilotPage />} />
           <Route path="competitors" element={<CompetitorMonitorPage />} />

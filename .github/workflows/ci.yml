@@ -30,6 +30,12 @@ jobs:
         run: go test ./api/handlers/... -run 'TestCustomerFacing|TestAttributionMethodsSix|TestFixedNotices' -v
       - name: SQLite 迁移回滚演练（TC-F-24 / 幂等 / 空启动 / 导航守卫）
         run: go test ./internal/db/... -v
+      - name: 七款新品能力回归（TC-D-01~20 / 溯源 ghost / 门禁 / 黑名单 / 双分母 / flag 隔离）
+        run: go test ./internal/sevenproducts/... -v
+      - name: 七款新品 12 表迁移回滚（TC-D-20 / 幂等 / DB CHECK 不变式 / 逆序删表）
+        run: go test ./internal/db/... -run 'TestSeven' -v
+      - name: 七款新品端点（flag off 404 / 批准门禁 403-409 / 能力黑名单 / 双分母）
+        run: go test ./api/handlers/... -run 'TestSeven' -v
       - name: 后端构建
         run: go build ./...
 

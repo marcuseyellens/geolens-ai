@@ -155,6 +155,9 @@ func (s *Server) RegisterRoutes(r *gin.Engine) {
 
 	// 第五批客户可见层端点（独立 flag，与前三 flag 正交；off 时不注册）。
 	s.registerCustomerFacingRoutes(r)
+
+	// 第六批七款新品能力端点（独立 flag，与前五 flag 正交；off 时不注册）。
+	s.registerSevenProductsRoutes(r)
 }
 
 // ---- Brand handlers ----
