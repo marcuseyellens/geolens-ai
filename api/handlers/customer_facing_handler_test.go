@@ -40,12 +40,16 @@ func TestCustomerFacingNav(t *testing.T) {
 	if err := json.Unmarshal(rec.Body.Bytes(), &nav); err != nil {
 		t.Fatal(err)
 	}
-	if len(nav) != 9 {
-		t.Fatalf("客户导航应 9 项，实得 %d", len(nav))
+	// AEO 工作台整改：核心链路 6 项可见，扩展模块（财务/广告/Agent）移出主导航。
+	if len(nav) != 6 {
+		t.Fatalf("客户导航应为 6 项核心链路，实得 %d", len(nav))
 	}
 	for _, n := range nav {
 		if n.NavKey == "evidence_drawer" || n.RoutePath == "/reports" {
 			t.Fatal("retired 项泄漏")
+		}
+		if n.NavKey == "finance" || n.NavKey == "ads" || n.NavKey == "agents" {
+			t.Fatalf("扩展模块不应出现在客户主导航: %s", n.NavKey)
 		}
 	}
 }

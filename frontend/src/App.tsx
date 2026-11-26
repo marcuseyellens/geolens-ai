@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
 import { Routes, Route, Link, useLocation, useNavigate, Navigate } from "react-router-dom";
-import { api } from "./api";
 import {
   LayoutDashboard,
   Crosshair,
   ScanLine,
+  ScanEye,
   Settings,
   Moon,
   Sun,
@@ -52,42 +51,69 @@ import {
 } from "./routes/customer-pages";
 import { AgentBuilderPage, RunReplayPage } from "./routes/seven-products-pages";
 
-const navItems = [
+/**
+ * AEO 工作台：侧栏只保留客户 AEO 管理核心链路（单一信息架构）。
+ * 运维 / 增长 / 财务 / MCP / 设置等平台内部能力收敛进「系统管理」折叠组，
+ * 财务 AI / 付费广告 / Agent 三项扩展模块不进主导航，仅从概览卡片进入（路由保留）。
+ */
+const aeoNavItems = [
   { path: "/app", label: "概览", icon: LayoutDashboard },
-  { path: "/app/brands", label: "品牌", icon: Crosshair },
+  { path: "/app/brand/demo", label: "品牌可见性", icon: Crosshair },
+  { path: "/app/competitors", label: "竞品监测", icon: Radar },
+  { path: "/app/facts", label: "品牌事实库", icon: ScanEye },
+  { path: "/app/attribution", label: "溯源数据", icon: BarChart3 },
+  { path: "/app/account", label: "账户套餐", icon: CreditCard },
+];
+
+const systemNavItems = [
+  { path: "/app/brands", label: "品牌管理", icon: Crosshair },
   { path: "/app/audit", label: "站点检查", icon: ScanLine },
-  { path: "/app/growth", label: "增长看板", icon: BarChart3 },
   { path: "/app/acceptance", label: "发布验收", icon: ShieldCheck },
-  { path: "/app/billing", label: "套餐账单", icon: CreditCard },
   { path: "/app/monitor", label: "监控发布", icon: Activity },
-  { path: "/app/competitor", label: "竞品观察", icon: Radar },
+  { path: "/app/growth", label: "增长看板", icon: BarChart3 },
+  { path: "/app/billing", label: "套餐账单", icon: CreditCard },
   { path: "/app/operations", label: "运行治理", icon: Cpu },
   { path: "/app/mcp", label: "MCP 接入", icon: Plug },
+  { path: "/app/competitor", label: "竞品观察(旧)", icon: Radar },
   { path: "/app/settings", label: "设置", icon: Settings },
 ];
 
-/** ECF-01：客户可见导航从 GET /nav 读取，前端不硬编码这 9 项。 */
-function CustomerNav() {
-  const [items, setItems] = useState<Array<{ nav_key: string; label: string; route_path: string }>>([]);
-  useEffect(() => {
-    api.getJson<Array<{ nav_key: string; label: string; route_path: string }>>("/nav")
-      .then((data) => setItems(Array.isArray(data) ? data : []))
-      .catch(() => setItems([]));
-  }, []);
-  if (items.length === 0) return null;
+/**
+ * 系统管理折叠组：默认收起，E2E 与运维人员可通过点击展开访问。
+ * data-testid 稳定定位，不依赖折叠态文本。
+ */
+function SystemNav() {
+  const location = useLocation();
+  const systemActive = systemNavItems.some((item) => location.pathname.startsWith(item.path));
   return (
-    <div className="px-3 pt-3 mt-2 border-t border-edge">
-      <p className="px-3 pb-1 text-[10px] uppercase tracking-wider text-ink-subtle">客户视图</p>
-      {items.map((n) => (
-        <Link
-          key={n.nav_key}
-          to={`/app${n.route_path.replace(/^\/app/, "").replace(/:[^/]+/g, "demo")}`}
-          className="flex items-center gap-2.5 px-3 py-1.5 rounded-ds text-xs text-ink-muted hover:text-ink hover:bg-canvas"
-        >
-          {n.label}
-        </Link>
-      ))}
-    </div>
+    <T>
+      <details className="px-3 pt-2 mt-1 border-t border-edge" data-testid="system-nav" open={systemActive}>
+        <summary className="flex items-center gap-2.5 px-3 py-2 rounded-ds text-xs font-medium text-ink-muted hover:text-ink hover:bg-canvas cursor-pointer list-none">
+          <Settings className="h-4 w-4" />
+          系统管理
+          <span className="ml-auto text-[10px] text-ink-subtle">{systemNavItems.length}</span>
+        </summary>
+        <div className="mt-1 space-y-0.5">
+          {systemNavItems.map((item) => {
+            const active = location.pathname.startsWith(item.path);
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "flex items-center gap-2.5 px-3 py-1.5 rounded-ds text-xs transition-all",
+                  active ? "bg-accent-subtle text-accent" : "text-ink-muted hover:text-ink hover:bg-canvas",
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+      </details>
+    </T>
   );
 }
 
@@ -122,7 +148,7 @@ function AppShell() {
         </Link>
 
         <nav className="flex-1 px-3 py-2 space-y-1">
-          {navItems.map((item) => {
+          {aeoNavItems.map((item) => {
             const active =
               item.path === "/app"
                 ? location.pathname === "/app" || location.pathname === "/app/"
@@ -149,7 +175,7 @@ function AppShell() {
           })}
         </nav>
 
-        <CustomerNav />
+        <SystemNav />
 
         <div className="px-3 py-3 border-t border-edge space-y-1">
           {user && (

@@ -191,7 +191,8 @@ var tableNames = []string{
 	"nav_item",
 }
 
-// 10 项可见客户导航（§1.2 的 9 项 + 账户），6 项 retired（IA-04～09）。
+// AEO 工作台导航：核心链路 6 项可见；财务 AI / 付费广告 / Agent 为扩展模块，
+// 移出主导航（visible=0，路由仍可从概览卡片进入，功能不删）；6 项 IA retired 恒不可见。
 var navSeed = []struct {
 	key, label, kind, route string
 	visible                 int
@@ -201,9 +202,9 @@ var navSeed = []struct {
 	{"brand", "品牌可见性", "customer_page", "/brand/:brandId", 1, ""},
 	{"competitors", "竞品监测", "customer_page", "/competitors", 1, ""},
 	{"facts", "品牌事实库", "customer_page", "/facts", 1, ""},
-	{"finance", "财务 AI", "module", "/finance", 1, ""},
-	{"ads", "付费广告", "module", "/ads", 1, ""},
-	{"agents", "Agent 管理", "module", "/agents", 1, ""},
+	{"finance", "财务 AI", "module", "/finance", 0, ""},
+	{"ads", "付费广告", "module", "/ads", 0, ""},
+	{"agents", "Agent 管理", "module", "/agents", 0, ""},
 	{"attribution", "溯源数据", "module", "/attribution", 1, ""},
 	{"account", "账户 / 套餐", "account", "/account", 1, ""},
 	// IA-04～09：无客户路由，恒不可见（FC-1）
@@ -237,6 +238,11 @@ func (d *DB) MigrateUp() error {
 	}
 	// 不变量兜底：retired 恒不可见（历史行若被误改，这里纠正）。
 	if _, err = tx.Exec(`UPDATE nav_item SET visible = 0 WHERE retired_from IS NOT NULL AND retired_from <> ''`); err != nil {
+		return err
+	}
+	// AEO 工作台整改：扩展模块（财务 AI / 付费广告 / Agent）移出客户主导航，
+	// 历史库已存在的 visible=1 行在此纠正；路由不受影响，功能不删（可从概览卡片进入）。
+	if _, err = tx.Exec(`UPDATE nav_item SET visible = 0 WHERE nav_key IN ('finance','ads','agents')`); err != nil {
 		return err
 	}
 	return tx.Commit()

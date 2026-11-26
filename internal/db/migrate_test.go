@@ -15,7 +15,7 @@ func newTestDB(t *testing.T) *DB {
 	return d
 }
 
-// TC-F-01 变体：导航恰 10 项可见（9 + 账户），retired 6 项不可见无路由。
+// AEO 工作台整改：核心链路 6 项可见；扩展模块（财务/广告/Agent）与 retired 6 项不可见。
 func TestNavGuards(t *testing.T) {
 	d := newTestDB(t)
 	if err := d.MigrateUp(); err != nil {
@@ -25,17 +25,17 @@ func TestNavGuards(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(nav) != 9 {
-		t.Fatalf("可见导航应为 9 项，实得 %d", len(nav))
+	if len(nav) != 6 {
+		t.Fatalf("可见导航应为 6 项核心链路，实得 %d", len(nav))
 	}
 	hasAccount := false
 	for _, n := range nav {
 		if n.NavKey == "account" {
 			hasAccount = true
 		}
-		for _, banned := range []string{"/evidence-drawer", "/prompts", "/site-audit", "/reports", "/fix-kit", "/rescan-compare"} {
-			if n.RoutePath == banned {
-				t.Fatalf("retired 路由泄漏到客户导航: %s", banned)
+		for _, banned := range []string{"finance", "ads", "agents", "/evidence-drawer", "/prompts", "/site-audit", "/reports", "/fix-kit", "/rescan-compare"} {
+			if n.NavKey == banned || n.RoutePath == banned {
+				t.Fatalf("扩展模块或 retired 路由泄漏到客户主导航: %s", banned)
 			}
 		}
 	}
@@ -46,9 +46,9 @@ func TestNavGuards(t *testing.T) {
 	if err != nil || bad {
 		t.Fatalf("retired 项不得可见且有路由: bad=%v err=%v", bad, err)
 	}
-	// 角色过滤：role_bit=1 只应看到 role_mask 含 1 的项（本种子全 7，故仍 9 项）
+	// 角色过滤：role_bit=1 只应看到 role_mask 含 1 的可见项（本种子全 7，故仍 6 项核心链路）
 	roleNav, _ := d.VisibleNav(1)
-	if len(roleNav) != 9 {
+	if len(roleNav) != 6 {
 		t.Fatalf("role=1 导航数异常: %d", len(roleNav))
 	}
 }

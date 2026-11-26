@@ -2,7 +2,7 @@ import { T } from "../i18n";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Page, PageHeader, StatCard, Card, EmptyState, Button, Badge, Spinner, Callout } from "../ds";
-import { Crosshair, TrendingUp, ScanEye, Cpu } from "lucide-react";
+import { Crosshair, ScanEye, Cpu, Radar, Database, Waypoints, Wallet, Megaphone, Bot } from "lucide-react";
 import { api } from "../api";
 import type { Brand, ModelInfo } from "../types";
 import { MODEL_LABELS } from "../types";
@@ -10,7 +10,6 @@ import { MODEL_LABELS } from "../types";
 export default function DashboardPage() {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [models, setModels] = useState<ModelInfo[]>([]);
-  const [score, setScore] = useState<{ value: number; count: number } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,21 +20,6 @@ export default function DashboardPage() {
         if (cancelled) return;
         setBrands(b || []);
         setModels(m || []);
-
-        const reports = await Promise.all(
-          (b || []).map((brand) => api.getReport(brand.id).catch(() => null)),
-        );
-        if (cancelled) return;
-        let weighted = 0;
-        let count = 0;
-        for (const report of reports) {
-          const n = report?.total_detections ?? 0;
-          if (n > 0) {
-            weighted += (report?.avg_score ?? 0) * n;
-            count += n;
-          }
-        }
-        setScore(count > 0 ? { value: weighted / count, count } : null);
       } catch {
         // 加载失败时保留空状态
       } finally {
@@ -51,15 +35,22 @@ export default function DashboardPage() {
   const enabledModels = models.filter((m) => m.enabled);
   const totalBrands = brands.length;
 
+  // 扩展模块：财务 AI / 付费广告 / Agent 管理不进主导航，仅从此处进入。
+  const modules = [
+    { path: "/app/finance", label: "财务 AI", desc: "财务健康分区，独立口径", icon: Wallet },
+    { path: "/app/ads", label: "付费广告", desc: "广告活动与建议只读", icon: Megaphone },
+    { path: "/app/agents", label: "Agent 管理", desc: "Agent 构建与运行回放", icon: Bot },
+  ];
+
   return (
     <T>
     <Page>
       <PageHeader
-        title="概览"
-        description="监测你的品牌在各大 AI 模型中的推荐表现"
+        title="AEO 工作台"
+        description="按品牌可见性 → 竞品监测 → 事实库 → 溯源 的顺序管理你的 AEO 工作"
         actions={
-          <Link to="/app/brands">
-            <Button>管理品牌</Button>
+          <Link to="/app/brand/demo">
+            <Button>查看品牌可见性</Button>
           </Link>
         }
       />
@@ -95,12 +86,16 @@ export default function DashboardPage() {
               hint="位置、情感、竞品等"
             />
             <StatCard
-              label="AEO 评分"
-              value={score ? Math.round(score.value) : "—"}
-              icon={<TrendingUp className="h-5 w-5" />}
-              hint={score ? `基于 ${score.count} 次检测` : "需检测后生成"}
+              label="事实条目"
+              value="—"
+              icon={<Database className="h-5 w-5" />}
+              hint="去品牌事实库查看"
             />
           </div>
+
+          <Callout tone="info" className="mb-6">
+            本工作台按「提及 / 推荐 / 链接」三态分列展示，不提供综合可见度分；所有数字附有效样本量与口径 1.3。技术就绪 ≠ 被推荐。
+          </Callout>
 
           <Card className="mb-6">
             <h2 className="text-base font-medium text-ink mb-4">已接入的 AI 模型</h2>
@@ -159,6 +154,47 @@ export default function DashboardPage() {
                 ))}
               </div>
             )}
+          </Card>
+
+          <Card className="mt-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Waypoints className="h-4 w-4 text-accent" />
+              <h2 className="text-base font-medium text-ink">AEO 核心链路</h2>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                { path: "/app/brand/demo", label: "品牌可见性", desc: "逐模型三态", icon: Crosshair },
+                { path: "/app/competitors", label: "竞品监测", desc: "对手被引用处", icon: Radar },
+                { path: "/app/facts", label: "品牌事实库", desc: "可核验事实", icon: Database },
+                { path: "/app/attribution", label: "溯源数据", desc: "引用出处", icon: ScanEye },
+              ].map((m) => (
+                <Link key={m.path} to={m.path} className="flex items-start gap-2 p-3 rounded-ds border border-edge hover:border-edge-strong transition-colors">
+                  <m.icon className="h-4 w-4 text-accent shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-ink">{m.label}</p>
+                    <p className="text-xs text-ink-muted mt-0.5">{m.desc}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </Card>
+
+          <Card className="mt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-medium text-ink">扩展模块</h2>
+              <span className="text-xs text-ink-subtle">独立于 AEO 核心链路</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {modules.map((m) => (
+                <Link key={m.path} to={m.path} className="flex items-start gap-2 p-3 rounded-ds border border-edge hover:border-edge-strong transition-colors">
+                  <m.icon className="h-4 w-4 text-accent shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-ink">{m.label}</p>
+                    <p className="text-xs text-ink-muted mt-0.5">{m.desc}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </Card>
         </>
       )}

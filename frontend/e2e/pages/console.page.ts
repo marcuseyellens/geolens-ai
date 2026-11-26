@@ -23,8 +23,22 @@ export class ConsolePage {
     await this.sidebar.waitFor();
   }
 
+  getSystemNav(): Locator {
+    return this.page.getByTestId("system-nav");
+  }
+
+  /** 展开「系统管理」折叠组（运维/治理页面已收敛于此）。 */
+  async expandSystemNav() {
+    const details = this.page.getByTestId("system-nav");
+    if ((await details.getAttribute("open")) === null) {
+      await details.locator("summary").click();
+    }
+  }
+
   async gotoSection(label: string, title: string) {
-    await this.nav(label).click();
+    const link = this.nav(label);
+    if (!(await link.isVisible())) await this.expandSystemNav();
+    await link.click();
     await this.heading(title).waitFor();
   }
 }
